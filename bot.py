@@ -161,20 +161,20 @@ async def on_message(message):
     """remove mobile links"""
     if not message.author.bot:
         # Check to see if the user is Alex
-        if message.author.user == 224648266472620032:
+        if message.author.id == 224648266472620032:
             # Check to see if he just posted some bullshit tiktok garbage
             tik_tok_links = re.findall(pattern=r"tiktok\.com", string=message.content, flags=(re.M | re.I))
             if tik_tok_links:
-                message.channel.send("Alex, Tik Tok is bad and you should feel bad. Stop posting Tik Tok links!")
-        
+                await message.channel.send("Alex, Tik Tok is bad and you should feel bad. Stop posting Tik Tok links!")
+
         pattern = re.compile(r'(?<=https://m\.)([^\s]+)')
         matches = re.findall(pattern, message.content)
         if len(matches) > 0:
-            facebook_links = ""
+            mobile_links = ""
             for match in matches:
-                facebook_links += f'https://{match} '
+                mobile_links += f'https://{match} '
 
-            await message.channel.send(facebook_links.strip())
+            await message.channel.send(mobile_links.strip())
         else:
             await client.process_commands(message)
     else:
@@ -204,4 +204,4 @@ async def on_command_error(ctx, error):
             return await ctx.send('Try again')
 
 
-client.run(load_json('token'))
+client.run(load_json('test_token'))
