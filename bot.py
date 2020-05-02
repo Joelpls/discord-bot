@@ -160,6 +160,13 @@ async def emote(ctx, *, text):
 async def on_message(message):
     """remove mobile links"""
     if not message.author.bot:
+        # Check to see if the user is Alex
+        if message.author.user == 224648266472620032:
+            # Check to see if he just posted some bullshit tiktok garbage
+            tik_tok_links = re.findall(pattern=r"tiktok\.com", string=message.content, flags=(re.M | re.I))
+            if tik_tok_links:
+                message.channel.send("Alex, Tik Tok is bad and you should feel bad. Stop posting Tik Tok links!")
+        
         pattern = re.compile(r'(?<=https://m\.)([^\s]+)')
         matches = re.findall(pattern, message.content)
         if len(matches) > 0:
