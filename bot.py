@@ -204,4 +204,4 @@ async def on_command_error(ctx, error):
             return await ctx.send('Try again')
 
 
-client.run(load_json('test_token'))
+client.run(load_json('token'))
