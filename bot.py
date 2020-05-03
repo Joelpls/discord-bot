@@ -156,6 +156,18 @@ async def emote(ctx, *, text):
     await ctx.send(message)
 
 
+@client.command(aliases=['respects', 'payrespect', 'respect', 'payrespects'])
+async def f(ctx, *, respectee=None):
+    """Press f to pay respects"""
+    await ctx.message.delete()
+    user_name = ctx.author.display_name
+    if respectee is None:
+        message = f'_{user_name} pays respects_'
+    else:
+        message = f'_{user_name} pays respects to {respectee}_'
+    await ctx.send(message)
+
+
 @client.event
 async def on_message(message):
     """remove mobile links"""
