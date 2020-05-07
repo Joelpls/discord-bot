@@ -146,6 +146,12 @@ async def reactions(ctx):
 @client.command(hidden=True)
 async def ban(ctx, name):
     await ctx.send(f'Shut up, {name.title()}')
+    
+@client.command(name='freegames')
+async def free_games(ctx):
+    """Show this week's free games from the Epic Store"""
+    # I should use beautiful soup library to parse this but for now I'm lazy
+    await ctx.send('https://www.epicgames.com/store/en-US/free-games')
 
 
 @client.command(aliases=['em', 'me'])
