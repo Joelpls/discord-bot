@@ -184,6 +184,12 @@ class RandomStuff(commands.Cog):
 
                 await message.channel.send(mobile_links.strip())
 
+    @commands.command(aliases=['greentext'])
+    async def gt(self, ctx, *, text):
+        text = f"```css\n{ctx.message.author.display_name}: >{text}\n```"
+        await ctx.send(f'{text}')
+        await ctx.message.delete()
+
 
 def setup(client):
     client.add_cog(RandomStuff(client))
