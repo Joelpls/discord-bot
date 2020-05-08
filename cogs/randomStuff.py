@@ -175,12 +175,13 @@ class RandomStuff(commands.Cog):
                 if tik_tok_links:
                     await message.channel.send("Alex, Tik Tok is bad and you should feel bad. Stop posting Tik Tok links!")
             '''
-            pattern = re.compile(r'(?<=https://m\.)([^\s]+)')
-            matches = re.findall(pattern, message.content)
+            # Fina all 'm.' links and don't include the '?sfnsn' at the end
+            matches = re.findall(r'(?<=https://m\.)\S*?(?=\?sfnsn|$)', message.content, re.MULTILINE)
+            matches = list(dict.fromkeys(matches))  # Remove duplicates
             if len(matches) > 0:
                 mobile_links = ""
                 for match in matches:
-                    mobile_links += f'https://{match} '
+                    mobile_links += f'https://{match}\n'
 
                 await message.channel.send(mobile_links.strip())
 
