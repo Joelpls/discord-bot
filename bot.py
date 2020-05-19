@@ -56,12 +56,17 @@ async def on_command_error(ctx, error):
 
 @client.command(aliases=['errors', 'logs', 'errorlogs'])
 async def error_logs(ctx, num_logs=5):
-    """Print out the latest error log messages. Defaults to 5. Limit 20."""
+    """Print out the latest error log messages. Defaults to 5. Limit 25."""
     collection = db[str(ctx.guild.id)]
-    if num_logs > 20:
-        num_logs = 20
+    if num_logs > 25:
+        num_logs = 25
 
-    logs = collection.find({}).limit(num_logs).sort('_id', -1)
+    # Get logs of mentioned user only
+    if len(ctx.message.mentions) > 0:
+        username = str(ctx.message.mentions[0])
+        logs = collection.find({'user_name': username}).limit(num_logs).sort('_id', -1)
+    else:
+        logs = collection.find({}).limit(num_logs).sort('_id', -1)
 
     msg_list = []
     for log in logs:
