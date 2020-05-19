@@ -54,12 +54,30 @@ async def on_command_error(ctx, error):
             return await ctx.send('Try again')
 
 
+@client.command(aliases=['errors', 'logs', 'errorlogs'])
+async def error_logs(ctx, num_logs=5):
+    """Print out the latest error log messages. Defaults to 5. Limit 20."""
+    collection = db[str(ctx.guild.id)]
+    if num_logs > 20:
+        num_logs = 20
+
+    logs = collection.find({}).limit(num_logs).sort('_id', -1)
+
+    msg_list = []
+    for log in logs:
+        message = \
+            f'<{log.get("date")}> UTC: {log.get("error")} error - {log.get("user_name")} : {log.get("message_content")}'
+        msg_list.append(f'{message}\n')
+
+    await ctx.send(''.join(msg_list))
+
+
 def print_log(error_name: str, ctx):
     collection = db[str(ctx.guild.id)]
     log_message = f"{error_name} error - {ctx.message.author} : {ctx.message.content}"
     utc_time = datetime.datetime.utcnow()
 
-    db_log_post = {'time': utc_time, 'error': error_name, 'user_name': str(ctx.message.author),
+    db_log_post = {'date': utc_time, 'error': error_name, 'user_name': str(ctx.message.author),
                    'message_content': ctx.message.content, 'user_id': ctx.author.id, 'channel': ctx.message.channel.id,
                    'message_id': ctx.message.id}
     collection.insert_one(db_log_post)
