@@ -5,6 +5,7 @@ import datetime
 import time
 from discord.ext import commands, tasks
 from itertools import cycle
+from pymongo import MongoClient
 
 
 def load_json(token):
@@ -12,6 +13,9 @@ def load_json(token):
         config = json.load(f)
     return config.get(token)
 
+
+cluster = MongoClient(load_json('db_address'))
+db = cluster['Logs']
 
 client = commands.Bot(command_prefix=load_json('prefix'), case_insensitive=True)
 for filename in os.listdir('./cogs'):
@@ -51,13 +55,16 @@ async def on_command_error(ctx, error):
 
 
 def print_log(error_name: str, ctx):
-    ts = time.time()
-    st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-    log_message = f"<{st}> - {error_name} error - {ctx.message.author} : {ctx.message.content}"
+    collection = db[str(ctx.guild.id)]
+    log_message = f"{error_name} error - {ctx.message.author} : {ctx.message.content}"
+    utc_time = datetime.datetime.utcnow()
 
-    print(log_message)
-    with open("error_logs.txt", "a") as log_file:
-        print(log_message, file=log_file)
+    db_log_post = {'time': utc_time, 'error': error_name, 'user_name': str(ctx.message.author),
+                   'message_content': ctx.message.content, 'user_id': ctx.author.id, 'channel': ctx.message.channel.id,
+                   'message_id': ctx.message.id}
+    collection.insert_one(db_log_post)
+
+    print(f'{utc_time} UTC: {log_message}')
 
 
 client.run(load_json('token'))
