@@ -176,7 +176,7 @@ class RandomStuff(commands.Cog):
                     await message.channel.send("Alex, Tik Tok is bad and you should feel bad. Stop posting Tik Tok links!")
             '''
             # Fina all 'm.' links and don't include the '?sfnsn' at the end
-            matches = re.findall(r'(?<=https://m\.)\S*?(?=\?sfnsn|$)', message.content, re.MULTILINE)
+            matches = re.findall(r'(?<=https://m\.(?!tiktok))\S*?(?=sfnsn|$)', message.content, re.MULTILINE)
             matches = list(dict.fromkeys(matches))  # Remove duplicates
             if len(matches) > 0:
                 mobile_links = ""
