@@ -20,7 +20,10 @@ class Covid(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        make_spellings()
+        try:
+            make_spellings()
+        except AttributeError:
+            print('COVID API error')
         print('COVID cog ready')
 
     @commands.command(aliases=['covid19', 'covid-19', 'coronavirus', 'corona', 'rona', 'c19'])

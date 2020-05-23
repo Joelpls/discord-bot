@@ -1,7 +1,8 @@
 import discord
-import random
 import json
 import os
+import datetime
+import time
 from discord.ext import commands, tasks
 from itertools import cycle
 from pymongo import MongoClient
@@ -13,16 +14,8 @@ def load_json(token):
     return config.get(token)
 
 
-async def create_indices(collection):
-    collection.create_index([("user", 1)])
-    collection.create_index([("reaction_received", -1)])
-    collection.create_index([("reaction_given", -1)])
-    collection.create_index([("user", 1), ("reaction_received", -1)])
-    collection.create_index([("user", 1), ("reaction_given", -1)])
-
-
 cluster = MongoClient(load_json('db_address'))
-react_db = cluster['Reactions']
+db = cluster['Logs']
 
 client = commands.Bot(command_prefix=load_json('prefix'), case_insensitive=True)
 for filename in os.listdir('./cogs'):
@@ -36,117 +29,6 @@ async def on_ready():
     print('Bot is ready')
 
 
-@client.command(aliases=['dice', 'r'])
-async def roll(ctx, user_roll):
-    """Roll some dice!"""
-    user_roll = user_roll.split('d')
-
-    if len(user_roll) != 2:
-        await ctx.send('usage: XdY where X is the number of dice and Y is the number of sides')
-        return
-
-    try:
-        dice = int(user_roll[0])
-        sides = int(user_roll[1])
-    except ValueError:
-        await ctx.send('usage: XdY where X is the number of dice and Y is the number of sides')
-        return
-
-    if sides < 1 or sides > 10000 or dice > 100 or dice < 1:
-        await ctx.send('Limit of 100 dice and 10000 sides')
-        return
-
-    rolls = []
-    total = 0
-    for d in range(0, dice):
-        rolled = random.randint(1, sides)
-        rolls.append(rolled)
-        total += rolled
-
-    await ctx.send(f'{ctx.author.display_name} rolled: {rolls} for **{total}**')
-
-
-@client.command(name='8ball', aliases=['8-Ball'])
-async def _8ball(ctx, *, question):
-    """Ask the Magic 8-Ball a question!"""
-    responses = load_json('8ball_responses')
-    await ctx.send(f' {ctx.author.display_name}\'s question: {question}\nAnswer: {random.choice(responses)}')
-
-
-@client.event
-async def on_reaction_add(reaction, user):
-    # Skip if this is their own message or a bot message
-    if user != reaction.message.author and client.user != reaction.message.author:
-        collection = react_db[str(user.guild.id)]
-        await create_indices(collection)
-
-        # Update the number of reactions received by the message author
-        if collection.count_documents({"user": reaction.message.author.id}, limit=1) == 0:
-            collection.insert_one({"user": reaction.message.author.id, "reaction_received": 1})
-        elif collection.count_documents({"user": reaction.message.author.id}, limit=1) > 0:
-            collection.update_one({"user": reaction.message.author.id}, {"$inc": {"reaction_received": 1}})
-
-        # Update the number of reactions given out by the reactor
-        if collection.count_documents({"user": user.id}, limit=1) == 0:
-            collection.insert_one({"user": user.id, "reaction_given": 1})
-        elif collection.count_documents({"user": user.id}, limit=1) > 0:
-            collection.update_one({"user": user.id}, {"$inc": {"reaction_given": 1}})
-
-
-@client.event
-async def on_reaction_remove(reaction, user):
-    if user != reaction.message.author and client.user != reaction.message.author:
-        collection = react_db[str(user.guild.id)]
-
-        # Remove a reaction received by the message author
-        if collection.count_documents({"user": reaction.message.author.id}, limit=1) != 0:
-            collection.update_one({"user": reaction.message.author.id}, {"$inc": {"reaction_received": -1}})
-
-        # Remove a reaction given by the reactor
-        if collection.count_documents({"user": user.id}, limit=1) != 0:
-            collection.update_one({"user": user.id}, {"$inc": {"reaction_given": -1}})
-
-
-@client.command()
-async def reactions(ctx):
-    """Shows the total number of reactions each user has received on their messages"""
-    collection = react_db[str(ctx.guild.id)]
-    all_users = collection.find({}).sort('reaction_received', -1)
-
-    received = ''
-    index = 1
-    for doc in all_users:
-        try:
-            user = client.get_user(doc['user'])
-            s = f'**{index})** {user.display_name}: {doc["reaction_received"]}\n'
-            received += s
-        except KeyError:
-            continue
-        index += 1
-    index = 1
-
-    given = ''
-    all_users2 = collection.find({}).sort('reaction_given', -1)
-    for doc in all_users2:
-        try:
-            user = client.get_user(doc['user'])
-            s = f'**{index})** {user.display_name}: {doc["reaction_given"]}\n'
-            given += s
-        except KeyError:
-            continue
-        index += 1
-
-    embed = discord.Embed(color=0x00ff00).add_field(name='**Total reactions received:**', value=received, inline=True) \
-        .add_field(name='**Total reactions given:**', value=given, inline=True)
-
-    await ctx.send(embed=embed)
-
-
-@client.command(aliases=['em', 'me'])
-async def emote(ctx, *, text):
-    user = ctx.author.display_name
-    await ctx.send(f'_{user} {text}_')
-
 status = cycle(load_json('statuses'))
 
 
@@ -158,16 +40,54 @@ async def change_status():
 @client.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
+        print_log('MissingRequiredArgument', ctx)
         return await ctx.send('Please pass in all required arguments.')
+
     if isinstance(error, commands.CommandNotFound):
-        if ctx.invoked_with.startswith('!'):
-            return
-        return await ctx.send('Invalid Command')
+        print_log('CommandNotFound', ctx)
+
     if isinstance(error, commands.BadArgument):
+        print_log('BadArgument', ctx)
         if ctx.command.qualified_name == 'discover':
             return await ctx.send('Argument must be a digit.')
         else:
             return await ctx.send('Try again')
+
+
+@client.command(aliases=['errors', 'logs', 'errorlogs'])
+async def error_logs(ctx, num_logs=5):
+    """Print out the latest error log messages. Defaults to 5. Limit 25."""
+    collection = db[str(ctx.guild.id)]
+    if num_logs > 25:
+        num_logs = 25
+
+    # Get logs of mentioned user only
+    if len(ctx.message.mentions) > 0:
+        username = str(ctx.message.mentions[0])
+        logs = collection.find({'user_name': username}).limit(num_logs).sort('_id', -1)
+    else:
+        logs = collection.find({}).limit(num_logs).sort('_id', -1)
+
+    msg_list = []
+    for log in logs:
+        message = \
+            f'<{log.get("date")}> UTC: {log.get("error")} error - {log.get("user_name")} : {log.get("message_content")}'
+        msg_list.append(f'{message}\n')
+
+    await ctx.send(''.join(msg_list))
+
+
+def print_log(error_name: str, ctx):
+    collection = db[str(ctx.guild.id)]
+    log_message = f"{error_name} error - {ctx.message.author} : {ctx.message.content}"
+    utc_time = datetime.datetime.utcnow()
+
+    db_log_post = {'date': utc_time, 'error': error_name, 'user_name': str(ctx.message.author),
+                   'message_content': ctx.message.content, 'user_id': ctx.author.id, 'channel': ctx.message.channel.id,
+                   'message_id': ctx.message.id}
+    collection.insert_one(db_log_post)
+
+    print(f'{utc_time} UTC: {log_message}')
 
 
 client.run(load_json('token'))

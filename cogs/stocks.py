@@ -45,25 +45,34 @@ def get_basic_quote(ticker: str) -> discord.Embed:
     quote = c.quote(ticker)
     symbol = quote['symbol']
     company_name = quote['companyName']
-    change_percent = round(quote['changePercent'] * 100, 3)
     latest_price = quote['latestPrice']
-    change = round(quote['change'], 3)
     high = quote['high']
     low = quote['low']
     prev = quote['previousClose']
     q_time = quote['latestTime']
+    # These values might be null
+    try:
+        change_percent = round(quote['changePercent'] * 100, 3)
+        change = round(quote['change'], 3)
+    except TypeError:
+        change_percent = None
+        change = None
 
-    if change_percent >= 0:
-        market_percent_string = "+" + str(change_percent) + "%"
+    if change_percent is None:
+        market_percent_string = ''
+    elif change_percent >= 0:
+        market_percent_string = " (+" + str(change_percent) + "%)"
     else:
-        market_percent_string = str(change_percent) + "%"
+        market_percent_string = " (" + str(change_percent) + "%)"
 
-    if change >= 0:
+    if change is None:
+        change_string = ''
+    elif change >= 0:
         change_string = "+" + str(change)
     else:
         change_string = str(change)
 
-    desc1 = ''.join([str('${:,.2f}'.format(float(latest_price))), " ", change_string, " (", market_percent_string, ")"])
+    desc1 = ''.join([str('${:,.2f}'.format(float(latest_price))), " ", change_string, market_percent_string])
     if high is not None and low is not None:
         desc2 = ''.join(['High: ', '{:,.2f}'.format(float(high)), ' Low: ', '{:,.2f}'.format(float(low)), ' Prev: ',
                          '{:,.2f}'.format(float(prev))])

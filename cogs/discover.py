@@ -3,6 +3,7 @@ import discord
 import json
 from discord.ext import commands
 from pymongo import MongoClient
+import re
 from PIL import Image
 import copy
 import shutil
@@ -270,12 +271,17 @@ class Discover(commands.Cog):
         else:
             messages = await ctx.history(limit=2).flatten()
             bot_msg = messages[1]  # message above !undo command
+            pattern = re.compile(r'(?=https://)([^\s]+)')  # regex to get URL in the message
+            try:
+                url = re.findall(pattern, bot_msg.content)[0]  # Get the first URL of the message
+            except IndexError:
+                url = ''
 
-        url = bot_msg.content
         query = {"channel": ctx.channel.id, "url": url}
 
-        if (bot_msg.author.id == load_json('bot_id')) and (collection.count_documents(query, limit=1) != 0):
-            await bot_msg.edit(content='Discover undid')
+        if bot_msg.author.bot and (collection.count_documents(query, limit=1) != 0):
+            await bot_msg.edit(content='Discover undone by ' + ctx.message.author.display_name)
+            await ctx.message.delete()
         else:
             await ctx.send('Not deleted')
 
