@@ -54,7 +54,7 @@ async def on_command_error(ctx, error):
             return await ctx.send('Try again')
 
 
-@client.command(aliases=['errors', 'logs', 'errorlogs'])
+@client.command(name='logs', aliases=['errors', 'logs', 'errorlogs'])
 async def error_logs(ctx, num_logs=5):
     """Print out the latest error log messages. Defaults to 5. Limit 25."""
     collection = db[str(ctx.guild.id)]
@@ -71,7 +71,7 @@ async def error_logs(ctx, num_logs=5):
     msg_list = []
     for log in logs:
         message = \
-            f'<{log.get("date")}> UTC: {log.get("error")} error - {log.get("user_name")} : {log.get("message_content")}'
+            f'<{log.get("date")} UTC> {log.get("error")} error - {log.get("user_name")} : {log.get("message_content")}'
         msg_list.append(f'{message}\n')
 
     await ctx.send(''.join(msg_list))

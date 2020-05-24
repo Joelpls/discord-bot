@@ -87,6 +87,10 @@ Using the discover or pick command will post an image randomly in the database. 
 !gt [message]
 (aliases = !gt)
 - Type your message in green text.
+
+!logs [number (optional)]
+(aliases = !errors !errorlogs)
+- See incorrect commands passed to the bot. Get up to 25 messages. Default = 5.
 ```
 
 ### Stocks
