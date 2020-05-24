@@ -139,7 +139,7 @@ class RandomStuff(commands.Cog):
     async def ban(self, ctx, name):
         await ctx.send(f'Shut up, {name.title()}')
 
-    @commands.command(name='freegames', aliases='freegame')
+    @commands.command(name='freegames', aliases=['freegame'])
     async def free_games(self, ctx):
         """Show this week's free games from the Epic Store"""
         # I should use beautiful soup library to parse this but for now I'm lazy
