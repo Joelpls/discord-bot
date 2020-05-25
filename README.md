@@ -92,6 +92,20 @@ Using the discover or pick command will post an image randomly in the database. 
 (aliases = !errors !errorlogs)
 - See incorrect commands passed to the bot. Get up to 25 messages. Default = 5.
 ```
+### Food
+
+!food (aliases = !eat !restaurant !restaurants)
+
+```text
+!food (or !food choose)
+- Get a random restaurant recommendation from the database.
+
+!food add [restaurant]
+- Add a restaurant to the database.
+
+!food remove [restaurant (optional)]
+- Remove a restaurant from the database. Pass no restaurant to remove the one above this command.
+```
 
 ### Stocks
 
