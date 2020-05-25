@@ -95,8 +95,8 @@ class Ranks(commands.Cog):
                 continue
             index += 1
 
-        embed = discord.Embed(color=0x9f21ff).add_field(name='**Rank**', value=rank, inline=True)
-        await ctx.send(embed=embed)
+        rank_embed = discord.Embed(title='Rank', description=rank, color=0x9f21ff)
+        await ctx.send(embed=rank_embed)
 
 
 async def get_user_level(ctx, name):

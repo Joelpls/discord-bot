@@ -32,11 +32,11 @@ Using the discover or pick command will post an image randomly in the database. 
 (aliases = !p)
 - Display three random images and choose one to post.
 
-!remove [URL] 
+!remove [URL (optional)] 
 (aliases = !rm !delete !del !cursed)
 - Removes the image URL from the database. Pass no URL to remove the image posted above this command.
 
-!isremoved [URL]
+!isremoved [URL (optional)]
 (aliases = !isgone !indatabase !indb !isremove !isrm)
 - Checks if the image is in the database. Pass no URL to check the image posted above this command.
 
@@ -46,7 +46,7 @@ Using the discover or pick command will post an image randomly in the database. 
 !stats
 - See how many images are in this channel and total in the server.
 
-!stats [User Mention]
+!stats [@User]
 - See how many images this user posted in this channel and server.
 
 !undo
@@ -76,7 +76,7 @@ Using the discover or pick command will post an image randomly in the database. 
 (aliases = !freegame)
 - Get a link to this week's Epic Game Store free games.
 
-!emote
+!emote [emote]
 (aliases = !em !me)
 - Express yourself
 

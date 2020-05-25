@@ -129,9 +129,11 @@ class RandomStuff(commands.Cog):
                 continue
             index += 1
 
-        embed = discord.Embed(color=0x00ff00).add_field(name='**Total reactions received:**', value=received,
-                                                        inline=True) \
-            .add_field(name='**Total reactions given:**', value=given, inline=True)
+        embed = discord.Embed(title='Reaction Totals',
+                              description='Number of reactions users have received on their messages or given to other users.',
+                              color=0x00ff00)
+        embed.add_field(name='Total reactions received:', value=received, inline=True)
+        embed.add_field(name='Total reactions given:', value=given, inline=True)
 
         await ctx.send(embed=embed)
 

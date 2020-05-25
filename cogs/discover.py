@@ -83,7 +83,6 @@ class Discover(commands.Cog):
         query = [{"$match": {"channel": ctx.channel.id}}, {"$sample": {"size": 3}}]
         images = collection.aggregate(query)
 
-        embed = discord.Embed()
         files = []
 
         # Store the images locally and get their discord image URLs
@@ -100,8 +99,8 @@ class Discover(commands.Cog):
         new_image.save(f'{combo_image_name}')
 
         # Send the combined image.
-        embed.set_image(url=f'attachment://{combo_image_name}')
-        sent = await ctx.send(f"{ctx.message.author.display_name}'s discover:", file=discord.File(combo_image_name))
+        sent = await ctx.send(f"{ctx.message.author.display_name}'s discover:", file=discord.File(combo_image_name),
+                              delete_after=300)
         await ctx.message.delete()
 
         # Store the message ID of the new combined image message.
@@ -127,8 +126,6 @@ class Discover(commands.Cog):
                 os.remove(file)
         if os.path.isfile(combo_image_name):
             os.remove(combo_image_name)
-
-        # TODO delete message after certain amount of time has passed.
 
     # Randomly posts an image that has been posted before
     @commands.command(aliases=['d'])
