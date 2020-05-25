@@ -92,6 +92,14 @@ Using the discover or pick command will post an image randomly in the database. 
 (aliases = !errors !errorlogs)
 - See incorrect commands passed to the bot. Get up to 25 messages. Default = 5.
 ```
+### Ranks
+Earn experience by sending messages. The more active you are, the higher rank you will achieve.
+
+```text
+!level [user (optional)]
+- See a user's xp level
+```
+
 ### Food
 
 !food (aliases = !eat !restaurant !restaurants)
