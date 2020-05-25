@@ -98,6 +98,9 @@ Earn experience by sending messages. The more active you are, the higher rank yo
 ```text
 !level [user (optional)]
 - See a user's xp level
+
+!rank
+- View the rank of everyone on this server
 ```
 
 ### Food
