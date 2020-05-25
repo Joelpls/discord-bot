@@ -69,6 +69,9 @@ class Ranks(commands.Cog):
 
         database.find_one_and_update({"user_id": player.id, "server": guild.id},
                                      {"$inc": {"xp": xp, "messages": 1}, "$set": {"date": utc_time}}, upsert=True)
+        database.create_index([("xp", -1)])
+        database.create_index([("user_id", 1), ("server", 1)])
+
         if doc is None:
             return
 
