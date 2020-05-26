@@ -13,7 +13,7 @@ def load_json(token):
     return config.get(token)
 
 
-cluster = MongoClient(load_json('db_address'))
+cluster = MongoClient(os.environ['MONGODB_ADDRESS'])
 db = cluster['Logs']
 
 client = commands.Bot(command_prefix=load_json('prefix'), case_insensitive=True)
@@ -29,11 +29,6 @@ async def on_ready():
 
 
 status = cycle(load_json('statuses'))
-
-
-@tasks.loop(minutes=load_json('loop_time'))
-async def change_status():
-    await client.change_presence(activity=discord.Game(next(status)))
 
 
 @client.event
@@ -90,4 +85,4 @@ def print_log(error_name: str, ctx):
     print(f'{utc_time} UTC: {log_message}')
 
 
-client.run(load_json('token'))
+client.run(os.environ['DISCORD_TEST_TOKEN'])

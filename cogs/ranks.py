@@ -1,3 +1,5 @@
+import os
+
 import discord
 from discord.ext import commands
 import json
@@ -12,7 +14,7 @@ def load_json(token):
     return config.get(token)
 
 
-cluster = MongoClient(load_json('db_address'))
+cluster = MongoClient(os.environ['MONGODB_ADDRESS'])
 db = cluster['Ranks']
 
 
@@ -38,7 +40,7 @@ class Ranks(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.author.id == load_json('bot_id') or message.author.bot:
+        if message.author.bot:
             return
         # Don't get XP for checking your level or rankings. It gets too confusing.
         string_list = ['!level', '!rank', '!ranks', '!ranking', '!rankings']

@@ -89,7 +89,6 @@ async def single_state_cases(ctx, state: str) -> bool:
         closest_word = extract_spelling[0][0].lower()
     else:
         closest_word = state
-    print(extract_spelling)
 
     got_it = False
     try:
@@ -118,7 +117,6 @@ async def single_country_cases(ctx, country: str) -> bool:
         closest_word = extract_spelling[0][0].lower()
     else:
         closest_word = country
-    print(extract_spelling[0])
 
     if country.lower() in usa or closest_word in usa:
         country = 'US'

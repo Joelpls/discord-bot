@@ -1,3 +1,5 @@
+import os
+
 import discord
 import json
 from discord.ext import commands
@@ -20,7 +22,7 @@ async def create_indices(collection):
     collection.create_index([("user", 1), ("reaction_given", -1)])
 
 
-cluster = MongoClient(load_json('db_address'))
+cluster = MongoClient(os.environ['MONGODB_ADDRESS'])
 react_db = cluster['Reactions']
 
 

@@ -17,7 +17,7 @@ def load_json(token):
     return config.get(token)
 
 
-cluster = MongoClient(load_json('db_address'))
+cluster = MongoClient(os.environ['MONGODB_ADDRESS'])
 db = cluster['Discord']
 discover_images = cluster['Discover_Images']
 
@@ -41,7 +41,7 @@ class Discover(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.author.id != load_json('bot_id') and not message.author.bot:
+        if not message.author.bot:
             try:
                 image = message.attachments[0].url
                 suffix_list = ['jpg', 'jpeg', 'png', 'gif']

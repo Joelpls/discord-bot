@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import json
 from pymongo import MongoClient
+import os
 
 
 def load_json(token):
@@ -10,7 +11,7 @@ def load_json(token):
     return config.get(token)
 
 
-cluster = MongoClient(load_json('db_address'))
+cluster = MongoClient(os.environ['MONGODB_ADDRESS'])
 db = cluster['Food']
 
 
