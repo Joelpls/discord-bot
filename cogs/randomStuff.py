@@ -22,7 +22,7 @@ async def create_indices(collection):
     collection.create_index([("user", 1), ("reaction_given", -1)])
 
 
-cluster = MongoClient(os.environ['MONGODB_ADDRESS'])
+cluster = MongoClient(os.environ.get('MONGODB_ADDRESS'))
 react_db = cluster['Reactions']
 
 

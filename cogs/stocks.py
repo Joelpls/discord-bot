@@ -43,7 +43,7 @@ def setup(client):
 
 
 def get_basic_quote(ticker: str) -> discord.Embed:
-    c = p.Client(api_token=os.environ['IEX_PUB'], version='v1')
+    c = p.Client(api_token=os.environ.get('IEX_PUB'), version='v1')
     quote = c.quote(ticker)
     symbol = quote['symbol']
     company_name = quote['companyName']

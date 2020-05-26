@@ -13,7 +13,7 @@ def load_json(token):
     return config.get(token)
 
 
-cluster = MongoClient(os.environ['MONGODB_ADDRESS'])
+cluster = MongoClient(os.environ.get('MONGODB_ADDRESS'))
 db = cluster['Logs']
 
 client = commands.Bot(command_prefix=load_json('prefix'), case_insensitive=True)
@@ -82,4 +82,4 @@ def print_log(error_name: str, ctx):
     print(f'{utc_time} UTC: {log_message}')
 
 
-client.run(os.environ['DISCORD_TOKEN'])
+client.run(os.environ.get('DISCORD_TEST_TOKEN'))

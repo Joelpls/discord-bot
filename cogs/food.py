@@ -11,7 +11,7 @@ def load_json(token):
     return config.get(token)
 
 
-cluster = MongoClient(os.environ['MONGODB_ADDRESS'])
+cluster = MongoClient(os.environ.get('MONGODB_ADDRESS'))
 db = cluster['Food']
 
 
