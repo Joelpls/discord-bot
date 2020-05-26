@@ -98,7 +98,7 @@ class Ranks(commands.Cog):
                 continue
             index += 1
 
-        rank_embed = discord.Embed(title='Rank', description=rank, color=0x9f21ff)
+        rank_embed = discord.Embed(title='Rank', description=rank, color=discord.Color(random.randint(1, 16777215)))
         await ctx.send(embed=rank_embed)
 
 
@@ -115,10 +115,38 @@ async def get_user_level(ctx, name):
 
     level = get_level_from_xp(doc['xp'])
 
-    # TODO make this look cool
-    await ctx.send(f"{player.display_name} is level {level}.\n"
-                   f"Total XP: {doc['xp']}\n"
-                   f"{get_level_progress(doc['xp'])} XP needed to rank up.")
+    # Get the rank by counting the users with XP greater than this user
+    rank = database.count({'xp': {'$gt': doc['xp']}}) + 1
+
+    next_lvl_xp = get_level_xp(level)
+    curr_lvl_xp = next_lvl_xp - get_level_progress(doc['xp'])
+
+    description = (f"Total XP: {doc['xp']}\n"
+                   f"{curr_lvl_xp}/{next_lvl_xp} XP\n"
+                   f"{print_progress_bar(iteration=curr_lvl_xp, total=next_lvl_xp, length=30)}")
+
+    level_embed = discord.Embed(title=f"{player.display_name} | Level {level} | Rank {rank}", description=description,
+                                color=discord.Color(random.randint(1, 16777215)))
+    await ctx.send(embed=level_embed)
+
+
+# Print iterations progress
+def print_progress_bar(iteration, total, prefix='', suffix='', decimals=1, length=100, fill='█'):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+    """
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filled_length = int(length * iteration // total)
+    bar = fill * filled_length + '-' * (length - filled_length)
+    return '%s |%s| %s%% %s' % (prefix, bar, percent, suffix)
 
 
 def get_level_xp(lvl: int):
