@@ -11,8 +11,10 @@ A Discord bot with random fun commands.
 
 ### Installation
 
-- Replace `config-example.json` variables with your own values
-- Rename `config-example.json` to `config.json`
+- setup environment variables:
+  - DISCORD_TOKEN : your Bot Token from the discord developer portal
+  - MONGODB_ADDRESS : your MongoDB address
+  - IEX_PUB : your IEX Cloud key
 
 TODO
 
