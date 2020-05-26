@@ -28,9 +28,6 @@ async def on_ready():
     print('Bot is ready')
 
 
-status = cycle(load_json('statuses'))
-
-
 @client.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
