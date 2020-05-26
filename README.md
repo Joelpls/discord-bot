@@ -99,7 +99,7 @@ Earn experience by sending messages. The more active you are, the higher rank yo
 
 ```text
 !level [user (optional)]
-- See a user's xp level
+- See a user's rank and xp level
 
 !rank
 (aliases = !ranks !rankings !ranking)
