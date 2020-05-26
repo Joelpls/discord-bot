@@ -40,6 +40,10 @@ class Ranks(commands.Cog):
     async def on_message(self, message):
         if message.author.id == load_json('bot_id') or message.author.bot:
             return
+        # Don't get XP for checking your level or rankings. It gets too confusing.
+        string_list = ['!level', '!rank', '!ranks', '!ranking', '!rankings']
+        if message.content in string_list:
+            return
 
         database = db[str(message.guild.id)]
 
@@ -56,7 +60,7 @@ class Ranks(commands.Cog):
                 bonus = True
         except IndexError:
             pass
-        if message.content.startswith('!'):
+        if message.content.startswith(load_json('prefix')):
             bonus = True
 
         # Get the player's XP
@@ -96,7 +100,7 @@ class Ranks(commands.Cog):
         if new_level != curr_level:
             await message.channel.send(f'{player.display_name} is now level {new_level}!')
 
-    @commands.command(aliases=['ranks'])
+    @commands.command(aliases=['ranks', 'ranking', 'rankings'])
     async def rank(self, ctx):
         """Shows the ranks of the server's users."""
         database = db[str(ctx.guild.id)]
@@ -144,6 +148,7 @@ async def get_user_level(ctx, name):
 
     level_embed = discord.Embed(title=f"{player.display_name} | Level {level} | Rank #{rank}", description=description,
                                 color=color)
+    level_embed.set_thumbnail(url=player.avatar_url)
     await ctx.send(embed=level_embed)
 
 

@@ -2,7 +2,6 @@ import discord
 import json
 import os
 import datetime
-import time
 from discord.ext import commands, tasks
 from itertools import cycle
 from pymongo import MongoClient
@@ -40,18 +39,21 @@ async def change_status():
 @client.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        print_log('MissingRequiredArgument', ctx)
+        print_log('MissingRequiredArgument error', ctx)
         return await ctx.send('Please pass in all required arguments.')
 
-    if isinstance(error, commands.CommandNotFound):
-        print_log('CommandNotFound', ctx)
+    elif isinstance(error, commands.CommandNotFound):
+        print_log('CommandNotFound error', ctx)
 
-    if isinstance(error, commands.BadArgument):
-        print_log('BadArgument', ctx)
+    elif isinstance(error, commands.BadArgument):
+        print_log('BadArgument error', ctx)
         if ctx.command.qualified_name == 'discover':
             return await ctx.send('Argument must be a digit.')
         else:
             return await ctx.send('Try again')
+
+    else:
+        print_log(str(error), ctx)
 
 
 @client.command(name='logs', aliases=['errors', 'errorlogs'])
@@ -70,8 +72,7 @@ async def error_logs(ctx, num_logs=5):
 
     msg_list = []
     for log in logs:
-        message = \
-            f'<{log.get("date")} UTC> {log.get("error")} error - {log.get("user_name")} : {log.get("message_content")}'
+        message = f'<{log.get("date")} UTC> {log.get("error")} - {log.get("user_name")} : {log.get("message_content")}'
         msg_list.append(f'{message}\n')
 
     await ctx.send(''.join(msg_list))
@@ -79,12 +80,11 @@ async def error_logs(ctx, num_logs=5):
 
 def print_log(error_name: str, ctx):
     collection = db[str(ctx.guild.id)]
-    log_message = f"{error_name} error - {ctx.message.author} : {ctx.message.content}"
+    log_message = f"{error_name} - {ctx.message.author} : {ctx.message.content}"
     utc_time = datetime.datetime.utcnow()
 
-    db_log_post = {'date': utc_time, 'error': error_name, 'user_name': str(ctx.message.author),
-                   'message_content': ctx.message.content, 'user_id': ctx.author.id, 'channel': ctx.message.channel.id,
-                   'message_id': ctx.message.id}
+    db_log_post = {'date': utc_time, 'error': error_name, 'user_name': str(ctx.message.author), 'message_content': ctx.message.content,
+                   'user_id': ctx.author.id, 'channel': ctx.message.channel.id, 'message_id': ctx.message.id}
     collection.insert_one(db_log_post)
 
     print(f'{utc_time} UTC: {log_message}')

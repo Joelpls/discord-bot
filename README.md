@@ -100,6 +100,7 @@ Earn experience by sending messages. The more active you are, the higher rank yo
 - See a user's xp level
 
 !rank
+(aliases = !ranks !rankings !ranking)
 - View the rank of everyone on this server
 ```
 
