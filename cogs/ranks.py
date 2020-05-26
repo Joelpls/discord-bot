@@ -47,7 +47,17 @@ class Ranks(commands.Cog):
         guild = message.guild
         utc_time = datetime.datetime.utcnow()
 
-        # TODO bonus points for photos
+        # Get a bonus for using meme bot or uploading memes (any image)
+        bonus = False
+        try:
+            image = message.attachments[0].url
+            suffix_list = ['jpg', 'jpeg', 'png', 'gif', 'mp4']
+            if image.casefold().endswith(tuple(suffix_list)):
+                bonus = True
+        except IndexError:
+            pass
+        if message.content.startswith('!'):
+            bonus = True
 
         # Get the player's XP
         # 2% chance of getting 50, 1% for 100, 0.1% for 500, 0.01% for 1000
@@ -59,6 +69,9 @@ class Ranks(commands.Cog):
             min_xp = 15
             max_xp = 30
             xp = random.randint(min_xp, max_xp)
+
+        if bonus:
+            xp = int(xp * 1.5)
 
         # Check cooldown time (gain XP only after cooldown time)
         cooldown_time = 30  # seconds
@@ -127,8 +140,10 @@ async def get_user_level(ctx, name):
                    f"{curr_lvl_xp}/{next_lvl_xp} XP\n"
                    f"{print_progress_bar(iteration=curr_lvl_xp, total=next_lvl_xp, length=30)}")
 
-    level_embed = discord.Embed(title=f"{player.display_name} | Level {level} | Rank {rank}", description=description,
-                                color=discord.Color(random.randint(1, 16777215)))
+    color = get_color(rank)
+
+    level_embed = discord.Embed(title=f"{player.display_name} | Level {level} | Rank #{rank}", description=description,
+                                color=color)
     await ctx.send(embed=level_embed)
 
 
@@ -171,6 +186,24 @@ def get_level_progress(xp):
         remaining_xp -= get_level_xp(level)
         level += 1
     return get_level_xp(level) - remaining_xp
+
+
+def get_color(rank):
+    """
+    Get the color for rank 1, 2, or 3.
+    Gold, Silver, or Bronze.
+    If higher than rank 3, get a random color.
+    """
+    if rank == 1:
+        color = int(0xffd700)
+    elif rank == 2:
+        color = int(0xc0c0c0)
+    elif rank == 3:
+        color = int(0xcd7f32)
+    else:
+        color = random.randint(1, 16777215)
+
+    return discord.Color(color)
 
 
 def setup(client):
