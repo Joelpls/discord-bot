@@ -85,4 +85,4 @@ def print_log(error_name: str, ctx):
     print(f'{utc_time} UTC: {log_message}')
 
 
-client.run(os.environ['DISCORD_TEST_TOKEN'])
+client.run(os.environ['DISCORD_TOKEN'])
