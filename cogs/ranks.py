@@ -47,6 +47,8 @@ class Ranks(commands.Cog):
         guild = message.guild
         utc_time = datetime.datetime.utcnow()
 
+        # TODO bonus points for photos
+
         # Get the player's XP
         # 2% chance of getting 50, 1% for 100, 0.1% for 500, 0.01% for 1000
         xp_list = [1, 50, 100, 500, 1000]

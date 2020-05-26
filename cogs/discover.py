@@ -144,10 +144,12 @@ class Discover(commands.Cog):
     # check the emoji chosen
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
-        if not user.bot:
+        if not user.bot and reaction.message.author.bot:
             collection_disc = discover_images[str(user.guild.id)]
             document = collection_disc.find_one(
                 {"message_id": reaction.message.id, "channel_id": reaction.message.channel.id})
+            if document is None:
+                return
             og_user = document.get('message_author')
 
             # If the user who called the discover == the user who reacted
