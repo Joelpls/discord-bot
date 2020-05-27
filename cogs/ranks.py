@@ -27,15 +27,12 @@ class Ranks(commands.Cog):
         print('Ranks cog ready')
 
     @commands.command()
-    async def level(self, ctx):
-        """See your level"""
-        try:
-            name = ctx.message.mentions[0]
-            if name.bot:
-                return
-            await get_user_level(ctx, name)
-        except IndexError:
-            await get_user_level(ctx, ctx.author)
+    async def level(self, ctx, member: discord.Member = None):
+        """See your level or another member's"""
+        member = member or ctx.author
+        if member.bot:
+            return
+        await get_user_level(ctx, member)
 
     @commands.Cog.listener()
     async def on_message(self, message):
