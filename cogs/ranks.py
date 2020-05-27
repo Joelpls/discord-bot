@@ -1,9 +1,8 @@
 import os
-
 import discord
 from discord.ext import commands
 import json
-from pymongo import MongoClient
+import pymongo
 import random
 import datetime
 
@@ -14,7 +13,7 @@ def load_json(token):
     return config.get(token)
 
 
-cluster = MongoClient(os.environ.get('MONGODB_ADDRESS'))
+cluster = pymongo.MongoClient(os.environ.get('MONGODB_ADDRESS'))
 db = cluster['Ranks']
 
 
@@ -51,37 +50,19 @@ class Ranks(commands.Cog):
 
         player = message.author
         guild = message.guild
-        utc_time = datetime.datetime.utcnow()
 
         # Get a bonus for using meme bot or uploading memes (any image)
-        bonus = False
-        try:
-            image = message.attachments[0].url
-            suffix_list = ['jpg', 'jpeg', 'png', 'gif', 'mp4']
-            if image.casefold().endswith(tuple(suffix_list)):
-                bonus = True
-        except IndexError:
-            pass
-        if message.content.startswith(load_json('prefix')):
-            bonus = True
+        bonus = check_bonus(message)
 
         # Get the player's XP
         # 2% chance of getting 50, 1% for 100, 0.1% for 500, 0.01% for 1000
-        xp_list = [1, 50, 100, 500, 1000]
-        weights = [1, .02, .01, .001, .0001]
-        xp = random.choices(xp_list, weights=weights, k=1)[0]
-
-        if xp == 1:
-            min_xp = 15
-            max_xp = 30
-            xp = random.randint(min_xp, max_xp)
-
-        if bonus:
-            xp = int(xp * 1.5)
+        xp = get_xp(bonus)
 
         # Check cooldown time (gain XP only after cooldown time)
         cooldown_time = 30  # seconds
         doc = database.find_one({"user_id": player.id, "server": guild.id})
+        utc_time = datetime.datetime.utcnow()
+
         if doc:
             doc_date = doc.get('date')
             diff = (utc_time - doc_date).total_seconds()
@@ -97,10 +78,64 @@ class Ranks(commands.Cog):
             return
 
         # check if they leveled up
-        curr_level = get_level_from_xp(doc['xp'])
-        new_level = get_level_from_xp(doc['xp'] + xp)
-        if new_level != curr_level:
-            await message.channel.send(f'{player.display_name} is now level {new_level}!')
+        await check_level_up(doc['xp'], message, player, xp)
+
+    @commands.Cog.listener()
+    async def on_reaction_add(self, reaction, user):
+        if user.id == reaction.message.author.id or reaction.message.author.bot:
+            return
+
+        database = db[str(reaction.message.guild.id)]
+        guild = reaction.message.guild
+
+        # Check cooldown time (gain XP only after cooldown time)
+        cooldown_time = 3  # seconds
+        doc = database.find_one({"user_id": user.id, "server": guild.id})
+        receiver_doc = database.find_one({"user_id": reaction.message.author.id, "server": guild.id})
+        utc_time = datetime.datetime.utcnow()
+
+        if doc:
+            doc_date = doc.get('date_reaction')
+            if doc_date:
+                diff = (utc_time - doc_date).total_seconds()
+                if diff < cooldown_time:
+                    return
+
+        # Give the person who reacted XP
+        # Give the receiver of the reaction XP too
+        xp_gained = 2
+        bulk_updates = [pymongo.UpdateOne({"user_id": user.id, "server": guild.id},
+                                          {"$inc": {"xp": xp_gained, "reactions": 1},
+                                           "$set": {"date_reaction": utc_time}}, upsert=True),
+                        pymongo.UpdateOne({"user_id": reaction.message.author.id, "server": guild.id},
+                                          {"$inc": {"xp": xp_gained, "reactions": 1},
+                                           "$set": {"date_reaction": utc_time}}, upsert=True)]
+        database.bulk_write(bulk_updates)
+
+        if doc is not None:
+            # check if they leveled up
+            await check_level_up(doc['xp'], reaction.message, user, xp_gained)
+
+        if receiver_doc is not None:
+            # check if receiver leveled up
+            await check_level_up(receiver_doc['xp'], reaction.message, reaction.message.author, xp_gained)
+
+    @commands.Cog.listener()
+    async def on_reaction_remove(self, reaction, user):
+        if user.id == reaction.message.author.id or reaction.message.author.bot:
+            return
+
+        database = db[str(reaction.message.guild.id)]
+        guild = reaction.message.guild
+
+        # Remove XP from the person who reacted
+        # Remove XP from the receiver of the reaction too
+        xp_lost = -2
+        bulk_updates = [pymongo.UpdateOne({"user_id": user.id, "server": guild.id},
+                                          {"$inc": {"xp": xp_lost, "reactions": -1}}, upsert=True),
+                        pymongo.UpdateOne({"user_id": reaction.message.author.id, "server": guild.id},
+                                          {"$inc": {"xp": xp_lost, "reactions": -1}}, upsert=True)]
+        database.bulk_write(bulk_updates)
 
     @commands.command(aliases=['ranks', 'ranking', 'rankings'])
     async def rank(self, ctx):
@@ -170,7 +205,7 @@ def print_progress_bar(iteration, total, prefix='', suffix='', decimals=1, lengt
     percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
     filled_length = int(length * iteration // total)
     bar = fill * filled_length + '-' * (length - filled_length)
-    return '%s |%s| %s%% %s' % (prefix, bar, percent, suffix)
+    return '%s %s %s%% %s' % (prefix, bar, percent, suffix)
 
 
 def get_level_xp(lvl: int):
@@ -193,6 +228,40 @@ def get_level_progress(xp):
         remaining_xp -= get_level_xp(level)
         level += 1
     return get_level_xp(level) - remaining_xp
+
+
+def check_bonus(message):
+    bonus = False
+    try:
+        image = message.attachments[0].url
+        suffix_list = ['jpg', 'jpeg', 'png', 'gif', 'mp4']
+        if image.casefold().endswith(tuple(suffix_list)):
+            bonus = True
+    except IndexError:
+        pass
+    if message.content.startswith(load_json('prefix')):
+        bonus = True
+    return bonus
+
+
+def get_xp(bonus):
+    xp_list = [1, 50, 100, 500, 1000]
+    weights = [1, .02, .01, .001, .0001]
+    xp = random.choices(xp_list, weights=weights, k=1)[0]
+    if xp == 1:
+        min_xp = 15
+        max_xp = 30
+        xp = random.randint(min_xp, max_xp)
+    if bonus:
+        xp = int(xp * 1.5)
+    return xp
+
+
+async def check_level_up(curr_xp, message, player, xp_gained):
+    curr_level = get_level_from_xp(curr_xp)
+    new_level = get_level_from_xp(curr_xp + xp_gained)
+    if new_level != curr_level:
+        await message.channel.send(f'{player.display_name} is now level {new_level}!')
 
 
 def get_color(rank):
