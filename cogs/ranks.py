@@ -54,6 +54,8 @@ class Ranks(commands.Cog):
         # Get the player's XP
         # 2% chance of getting 50, 1% for 100, 0.1% for 500, 0.01% for 1000
         xp = get_xp(bonus)
+        if xp >= 500:
+            await message.channel.send(f"{xp} point message!")
 
         # Check cooldown time (gain XP only after cooldown time)
         cooldown_time = 30  # seconds
