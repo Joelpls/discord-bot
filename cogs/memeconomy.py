@@ -12,11 +12,11 @@ def load_json(token):
 
 
 def is_owner_or_approved():
-    def predicate(ctx):
+    async def predicate(ctx):
         guild = ctx.guild
         if ctx.author is guild.owner:
             return True
-        if ctx.author.id == '413139799453597698':
+        if ctx.author.id == 413139799453597698:
             return True
 
     return commands.check(predicate)
