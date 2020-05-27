@@ -34,18 +34,21 @@ async def on_command_error(ctx, error):
         print_log('MissingRequiredArgument error', ctx)
         return await ctx.send('Please pass in all required arguments.')
 
-    elif isinstance(error, commands.CommandNotFound):
+    if isinstance(error, commands.CommandNotFound):
         print_log('CommandNotFound error', ctx)
 
-    elif isinstance(error, commands.BadArgument):
+    if isinstance(error, commands.BadArgument):
         print_log('BadArgument error', ctx)
         if ctx.command.qualified_name == 'discover':
             return await ctx.send('Argument must be a digit.')
-        else:
-            return await ctx.send('Try again')
+        if ctx.command.qualified_name == 'pay':
+            return await ctx.send('Usage: !pay <amount> <@member>')
+        if ctx.command.qualified_name == 'deposit':
+            return await ctx.send('Usage: !deposit <amount> <@member>')
 
-    else:
-        print_log(str(error), ctx)
+        return await ctx.send('Try again')
+
+    print_log(str(error), ctx)
 
 
 @client.command(name='logs', aliases=['errors', 'errorlogs'])

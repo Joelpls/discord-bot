@@ -49,7 +49,7 @@ class Memeconomy(commands.Cog):
     async def deposit(self, ctx, amount, member: discord.Member = None):
         """
         Deposit into a member's account.
-        Usage: deposit <amount> <@member>
+        Usage: !deposit <amount> <@member>
         """
         if type(amount) is str:
             try:
