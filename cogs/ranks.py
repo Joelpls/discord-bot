@@ -48,15 +48,6 @@ class Ranks(commands.Cog):
         player = message.author
         guild = message.guild
 
-        # Get a bonus for using meme bot or uploading memes (any image)
-        bonus = check_bonus(message)
-
-        # Get the player's XP
-        # 2% chance of getting 50, 1% for 100, 0.1% for 500, 0.01% for 1000
-        xp = get_xp(bonus)
-        if xp >= 500:
-            await message.channel.send(f"{xp} point message!")
-
         # Check cooldown time (gain XP only after cooldown time)
         cooldown_time = 30  # seconds
         doc = database.find_one({"user_id": player.id, "server": guild.id})
@@ -67,6 +58,15 @@ class Ranks(commands.Cog):
             diff = (utc_time - doc_date).total_seconds()
             if diff < cooldown_time:
                 return
+
+        # Get a bonus for using meme bot or uploading memes (any image)
+        bonus = check_bonus(message)
+
+        # Get the player's XP
+        # 2% chance of getting 50, 1% for 100, 0.1% for 500, 0.01% for 1000
+        xp = get_xp(bonus)
+        if xp >= 500:
+            await message.channel.send(f"{xp} point message!")
 
         database.find_one_and_update({"user_id": player.id, "server": guild.id},
                                      {"$inc": {"xp": xp, "messages": 1}, "$set": {"date": utc_time}}, upsert=True)
