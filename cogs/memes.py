@@ -35,12 +35,15 @@ class Memes(commands.Cog):
     async def meme(self, ctx, *args):
         """
         Get a random meme
-        Usage: !meme <subreddit> (optional) <# of submissions> (optional)
+        Usage: !meme <subreddit> <# of submissions> (optional arguments)
         Default subreddit is /r/dankmemes
-        Number of submissions argument determines how many of the top posts to pick a random post from. Limit 200.
+        Number of submissions argument determines how many of the top posts to pick a random post from. Limit 300, Default 100.
         Posts are the top of the past week.
         """
-        limit = 200
+        default_limit = 100
+        max_limit = 300
+
+        limit = default_limit
         subreddit = "dankmemes"
 
         # Get the subreddit and limit
@@ -54,8 +57,8 @@ class Memes(commands.Cog):
                 if len(args) > 1 and args[1].isnumeric():
                     limit = int(args[1])
 
-        if limit > 200:
-            limit = 200
+        if limit > max_limit:
+            limit = default_limit
 
         try:
             dankmemes = [post for post in reddit.subreddit(subreddit).top(time_filter='week', limit=limit)]
