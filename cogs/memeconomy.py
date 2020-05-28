@@ -142,18 +142,43 @@ class Memeconomy(commands.Cog):
 
         await ctx.send(f"{payer.display_name} paid {recipient.display_name} ${amount}")
 
-    @commands.command()
+    @commands.command(aliases=['slot', 'slotmachine'])
     async def slots(self, ctx, bet=0):
-        # TODO check have enough money
-        # TODO subtract bet from account
-        # [ Gem, Cherry, Banana, Lemon, Strawberry, Bar]
+        """
+        Press your luck at the slot machine.
+        Usage: !slots [bet]
+        """
+        if bet <= 0:
+            return
+        # check have enough money
+        guild = ctx.guild
+        player = ctx.message.author
+        bank = db[str(ctx.guild.id)]
+        bulk_updates = []
+
+        account = bank.find_one({"user_id": player.id, "server": guild.id})
+        if account['money'] < bet:
+            await ctx.send("Insufficient funds")
+            return
+
+        # subtract bet from account
+        bulk_updates.append(pymongo.UpdateOne({"user_id": player.id, "server": guild.id},
+                                              {"$inc": {"money": -1 * bet}}))
+
+        # [ Gem, Cherry, Banana, Lemon, Bar]
         gem = "\U0001F48E"
         cherry = "\U0001F352"
         banana = "\U0001F34C"
         lemon = "\U0001F34B"
-        strawberry = "\U0001F353"
         bar = "\U0001F36B"
-        slots = [gem, cherry, banana, lemon, strawberry, bar]
+        slots = [gem, cherry, banana, lemon, bar]
+        rankings = {
+            gem: 5,
+            cherry: 4,
+            banana: 3,
+            lemon: 2,
+            bar: 1
+        }
         results = [random.choice(slots), random.choice(slots), random.choice(slots)]
 
         wheels = [random.choice(slots), random.choice(slots), random.choice(slots)]
@@ -167,23 +192,46 @@ class Memeconomy(commands.Cog):
         await msg.edit(content=f"| {results[0]} | {results[1]} | {results[2]} |")
         await asyncio.sleep(0.4)
         await msg.edit(content=f"| {results[0]} | {results[1]} | {results[2]} |\n"
-                               f"{check_win(results, bet)}")
-        # TODO add winnings to account
+                               f"{check_win(results, rankings, bet)}")
+        # add winnings to account
+        winnings = get_winnings(results, rankings, bet)
+        if winnings > 0:
+            bulk_updates.append(pymongo.UpdateOne({"user_id": player.id, "server": guild.id},
+                                                  {"$inc": {"money": winnings}}))
+        bank.bulk_write(bulk_updates)
 
 
-def check_win(win_list: [], bet):
+def check_win(win_list: [], rankings, bet):
+    first = win_list[0]
+    second = win_list[1]
+    third = win_list[2]
+
+    bet = get_winnings(win_list, rankings, bet)
+
+    if first == second and second == third:
+        return f"Big win! ${bet}"
+
+    if first == second:
+        return f"Win! ${bet}"
+
+    else:
+        return "Lose"
+
+
+def get_winnings(win_list: [], rankings, bet):
     first = win_list[0]
     second = win_list[1]
     third = win_list[2]
 
     if first == second and second == third:
-        return "Win"
+        bet = bet * rankings[first] * 6
+        return int(bet)
 
     if first == second:
-        return "Win"
+        bet = bet * rankings[first]
+        return int(bet)
 
-    else:
-        return "Lose"
+    return 0
 
 
 def setup(client):
