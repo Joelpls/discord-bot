@@ -1,6 +1,7 @@
 import os
 import discord
 from discord.ext import commands
+from pymongo import MongoClient
 import json
 import praw
 import prawcore
@@ -16,6 +17,9 @@ def load_json(token):
 reddit = praw.Reddit(client_id=os.environ.get('REDDIT_CLIENT_ID'),
                      client_secret=os.environ.get('REDDIT_CLIENT_SECRET'),
                      user_agent="meme bot for Discord by Joel")
+
+cluster = MongoClient(os.environ.get('MONGODB_ADDRESS'))
+db = cluster['Memes']
 
 
 class Memes(commands.Cog):
@@ -79,7 +83,39 @@ class Memes(commands.Cog):
         meme_embed.set_image(url=meme.url)
         meme_embed.set_footer(text=meme.subreddit_name_prefixed)
 
-        await ctx.send(embed=meme_embed)
+        message = await ctx.send(embed=meme_embed)
+
+        collection = db[str(ctx.guild.id)]
+        collection.insert_one({"message_id": message.id, "op": ctx.message.author.id})
+
+        await message.add_reaction('⬆️')
+        await message.add_reaction('⬇️')
+        await message.add_reaction('🗑️')
+
+    @commands.Cog.listener()
+    async def on_reaction_add(self, reaction, user):
+        """
+        The original poster can delete their message with the trashcan emoji.
+        The message will automatically be deleted if 3 people down vote it.
+        """
+        collection = db[str(user.guild.id)]
+
+        # If 3 people downvote this, delete it.
+        if str(reaction) == '⬇️' and reaction.count >= 4:
+            collection.delete_one({"message_id": reaction.message.id, "op": user.id})
+            await reaction.message.delete()
+            return
+
+        # The original poster can trash their message.
+        if not user.bot and reaction.message.author.bot:
+            document = collection.find_one({"message_id": reaction.message.id, "op": user.id})
+            if document is None:
+                return
+
+            if str(reaction) == '🗑️':
+                collection.delete_one({"message_id": reaction.message.id, "op": user.id})
+                await reaction.message.delete()
+                return
 
 
 def setup(client):
