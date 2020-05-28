@@ -53,9 +53,6 @@ class Memes(commands.Cog):
         if limit > 200:
             limit = 200
 
-        print(limit)
-        print(subreddit)
-
         try:
             dankmemes = [post for post in reddit.subreddit(subreddit).top(time_filter='week', limit=limit)]
             meme = random.choice(dankmemes)
