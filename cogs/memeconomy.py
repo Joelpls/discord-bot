@@ -1,8 +1,10 @@
+import asyncio
 import os
 import discord
 from discord.ext import commands
 import json
 import pymongo
+import random
 
 
 def load_json(token):
@@ -61,7 +63,7 @@ class Memeconomy(commands.Cog):
         member = member or ctx.author
         if member.bot:
             return
-        
+
         guild = ctx.guild
         bank = db[str(ctx.guild.id)]
 
@@ -139,6 +141,49 @@ class Memeconomy(commands.Cog):
                         {"$inc": {"money": amount}}, upsert=True)
 
         await ctx.send(f"{payer.display_name} paid {recipient.display_name} ${amount}")
+
+    @commands.command()
+    async def slots(self, ctx, bet=0):
+        # TODO check have enough money
+        # TODO subtract bet from account
+        # [ Gem, Cherry, Banana, Lemon, Strawberry, Bar]
+        gem = "\U0001F48E"
+        cherry = "\U0001F352"
+        banana = "\U0001F34C"
+        lemon = "\U0001F34B"
+        strawberry = "\U0001F353"
+        bar = "\U0001F36B"
+        slots = [gem, cherry, banana, lemon, strawberry, bar]
+        results = [random.choice(slots), random.choice(slots), random.choice(slots)]
+
+        wheels = [random.choice(slots), random.choice(slots), random.choice(slots)]
+        msg = await ctx.send(f"| {wheels[0]} | {wheels[1]} | {wheels[2]} |")
+        for i in range(0, 3):
+            await asyncio.sleep(0.5)
+            wheels = [random.choice(slots), random.choice(slots), random.choice(slots)]
+            await msg.edit(content=f"| {wheels[0]} | {wheels[1]} | {wheels[2]} |")
+
+        await asyncio.sleep(0.5)
+        await msg.edit(content=f"| {results[0]} | {results[1]} | {results[2]} |")
+        await asyncio.sleep(0.4)
+        await msg.edit(content=f"| {results[0]} | {results[1]} | {results[2]} |\n"
+                               f"{check_win(results, bet)}")
+        # TODO add winnings to account
+
+
+def check_win(win_list: [], bet):
+    first = win_list[0]
+    second = win_list[1]
+    third = win_list[2]
+
+    if first == second and second == third:
+        return "Win"
+
+    if first == second:
+        return "Win"
+
+    else:
+        return "Lose"
 
 
 def setup(client):
