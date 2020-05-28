@@ -1,8 +1,10 @@
+import asyncio
 import os
 import discord
 from discord.ext import commands
 import json
 import pymongo
+import random
 
 
 def load_json(token):
@@ -61,7 +63,7 @@ class Memeconomy(commands.Cog):
         member = member or ctx.author
         if member.bot:
             return
-        
+
         guild = ctx.guild
         bank = db[str(ctx.guild.id)]
 
@@ -139,6 +141,97 @@ class Memeconomy(commands.Cog):
                         {"$inc": {"money": amount}}, upsert=True)
 
         await ctx.send(f"{payer.display_name} paid {recipient.display_name} ${amount}")
+
+    @commands.command(aliases=['slot', 'slotmachine'])
+    async def slots(self, ctx, bet=0):
+        """
+        Press your luck at the slot machine.
+        Usage: !slots [bet]
+        """
+        if bet <= 0:
+            return
+        # check have enough money
+        guild = ctx.guild
+        player = ctx.message.author
+        bank = db[str(ctx.guild.id)]
+        bulk_updates = []
+
+        account = bank.find_one({"user_id": player.id, "server": guild.id})
+        if account['money'] < bet:
+            await ctx.send("Insufficient funds")
+            return
+
+        # subtract bet from account
+        bulk_updates.append(pymongo.UpdateOne({"user_id": player.id, "server": guild.id},
+                                              {"$inc": {"money": -1 * bet}}))
+
+        # [ Gem, Cherry, Banana, Lemon, Bar]
+        gem = "\U0001F48E"
+        cherry = "\U0001F352"
+        banana = "\U0001F34C"
+        lemon = "\U0001F34B"
+        bar = "\U0001F36B"
+        slots = [gem, cherry, banana, lemon, bar]
+        rankings = {
+            gem: 5,
+            cherry: 4,
+            banana: 3,
+            lemon: 2,
+            bar: 1
+        }
+        results = [random.choice(slots), random.choice(slots), random.choice(slots)]
+
+        wheels = [random.choice(slots), random.choice(slots), random.choice(slots)]
+        msg = await ctx.send(f"| {wheels[0]} | {wheels[1]} | {wheels[2]} |")
+        for i in range(0, 3):
+            await asyncio.sleep(0.5)
+            wheels = [random.choice(slots), random.choice(slots), random.choice(slots)]
+            await msg.edit(content=f"| {wheels[0]} | {wheels[1]} | {wheels[2]} |")
+
+        await asyncio.sleep(0.5)
+        await msg.edit(content=f"| {results[0]} | {results[1]} | {results[2]} |")
+        await asyncio.sleep(0.4)
+        await msg.edit(content=f"| {results[0]} | {results[1]} | {results[2]} |\n"
+                               f"{check_win(results, rankings, bet)}")
+        # add winnings to account
+        winnings = get_winnings(results, rankings, bet)
+        if winnings > 0:
+            bulk_updates.append(pymongo.UpdateOne({"user_id": player.id, "server": guild.id},
+                                                  {"$inc": {"money": winnings}}))
+        bank.bulk_write(bulk_updates)
+
+
+def check_win(win_list: [], rankings, bet):
+    first = win_list[0]
+    second = win_list[1]
+    third = win_list[2]
+
+    bet = get_winnings(win_list, rankings, bet)
+
+    if first == second and second == third:
+        return f"Big win! ${bet}"
+
+    if first == second:
+        return f"Win! ${bet}"
+
+    else:
+        return "Lose"
+
+
+def get_winnings(win_list: [], rankings, bet):
+    first = win_list[0]
+    second = win_list[1]
+    third = win_list[2]
+
+    if first == second and second == third:
+        bet = bet * rankings[first] * 6
+        return int(bet)
+
+    if first == second:
+        bet = bet * rankings[first]
+        return int(bet)
+
+    return 0
 
 
 def setup(client):

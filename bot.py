@@ -45,6 +45,8 @@ async def on_command_error(ctx, error):
             return await ctx.send('Usage: !pay <amount> <@member>')
         if ctx.command.qualified_name == 'deposit':
             return await ctx.send('Usage: !deposit <amount> <@member>')
+        if ctx.command.qualified_name == 'slots':
+            return await ctx.send('Usage: !slots [bet]')
 
         return await ctx.send('Try again')
 
