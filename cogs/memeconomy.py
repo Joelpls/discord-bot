@@ -224,7 +224,7 @@ def get_winnings(win_list: [], rankings, bet):
     third = win_list[2]
 
     if first == second and second == third:
-        bet = bet * rankings[first] * 6
+        bet = bet * rankings[first] * 5
         return int(bet)
 
     if first == second:
