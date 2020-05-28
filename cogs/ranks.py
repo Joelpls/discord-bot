@@ -65,8 +65,6 @@ class Ranks(commands.Cog):
         # Get the player's XP
         # 2% chance of getting 50, 1% for 100, 0.1% for 500, 0.01% for 1000
         xp = get_xp(bonus)
-        if xp >= 500:
-            await message.channel.send(f"{xp} point message!")
 
         database.find_one_and_update({"user_id": player.id, "server": guild.id},
                                      {"$inc": {"xp": xp, "messages": 1}, "$set": {"date": utc_time}}, upsert=True)
@@ -76,8 +74,19 @@ class Ranks(commands.Cog):
         if doc is None:
             return
 
+        # notification boolean
+        try:
+            notifications = doc['notifications']
+            if notifications is None:
+                notifications = True
+        except KeyError:
+            notifications = True
+
+        if xp >= 500 and notifications:
+            await message.channel.send(f"{xp} point message!")
+
         # check if they leveled up
-        await check_level_up(doc['xp'], message, player, xp)
+        await check_level_up(doc['xp'], message, player, xp, notifications)
 
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
@@ -112,12 +121,24 @@ class Ranks(commands.Cog):
         database.bulk_write(bulk_updates)
 
         if doc is not None:
+            try:
+                notifications = doc['notifications']
+                if notifications is None:
+                    notifications = True
+            except KeyError:
+                notifications = True
             # check if they leveled up
-            await check_level_up(doc['xp'], reaction.message, user, xp_gained)
+            await check_level_up(doc['xp'], reaction.message, user, xp_gained, notifications)
 
         if receiver_doc is not None:
+            try:
+                receiver_notifs = receiver_doc['notifications']
+                if receiver_notifs is None:
+                    receiver_notifs = True
+            except KeyError:
+                receiver_notifs = True
             # check if receiver leveled up
-            await check_level_up(receiver_doc['xp'], reaction.message, reaction.message.author, xp_gained)
+            await check_level_up(receiver_doc['xp'], reaction.message, reaction.message.author, xp_gained, receiver_notifs)
 
     @commands.Cog.listener()
     async def on_reaction_remove(self, reaction, user):
@@ -155,6 +176,34 @@ class Ranks(commands.Cog):
 
         rank_embed = discord.Embed(title='Rank', description=rank, color=discord.Color(random.randint(1, 16777215)))
         await ctx.send(embed=rank_embed)
+
+    @commands.command(aliases=['silencelevels', 'silencelevel', 'silentlevel'])
+    async def silentlevels(self, ctx):
+        """
+        Stop receiving notifications on your own level rank up.
+        Call again to resume notifications.
+        """
+        database = db[str(ctx.guild.id)]
+        player = ctx.message.author
+        guild = ctx.guild
+        doc = database.find_one({"user_id": player.id, "server": guild.id})
+
+        try:
+            notifications = doc.get('notifications')
+        except KeyError:
+            notifications = True
+
+        if notifications is None or notifications:
+            database.update_one({"user_id": player.id, "server": guild.id},
+                                {"$set": {"notifications": False}})
+            await ctx.send(f"{player.display_name} will no longer receive rank up notifications.")
+            return
+
+        if notifications is False:
+            database.update_one({"user_id": player.id, "server": guild.id},
+                                {"$set": {"notifications": True}})
+            await ctx.send(f"{player.display_name} will now receive rank up notifications.")
+            return
 
 
 async def get_user_level(ctx, name):
@@ -256,7 +305,10 @@ def get_xp(bonus):
     return xp
 
 
-async def check_level_up(curr_xp, message, player, xp_gained):
+async def check_level_up(curr_xp, message, player, xp_gained, notifications):
+    if notifications is False:
+        return
+
     curr_level = get_level_from_xp(curr_xp)
     new_level = get_level_from_xp(curr_xp + xp_gained)
     if new_level != curr_level:
