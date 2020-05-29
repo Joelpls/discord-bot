@@ -31,20 +31,20 @@ class Memes(commands.Cog):
     async def on_ready(self):
         print('Memes cog ready')
 
-    @commands.command(aliases=['dankmeme', 'memes', 'dankmemes'])
+    @commands.command(aliases=['wholesomememe', 'memes', 'wholesomememes'])
     async def meme(self, ctx, *args):
         """
         Get a random meme
         Usage: !meme <subreddit> <# of submissions> (optional arguments)
-        Default subreddit is /r/dankmemes
-        Number of submissions argument determines how many of the top posts to pick a random post from. Limit 300, Default 100.
+        Default subreddit is /r/wholesomememes
+        Number of submissions argument determines how many of the top posts to pick a random post from. Limit 300, Default 50.
         Posts are the top of the past week.
         """
-        default_limit = 100
+        default_limit = 50
         max_limit = 300
 
         limit = default_limit
-        subreddit = "dankmemes"
+        subreddit = "wholesomememes"
 
         # Get the subreddit and limit
         if len(args) > 0:
