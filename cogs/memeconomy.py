@@ -172,6 +172,7 @@ class Memeconomy(commands.Cog):
         lemon = "\U0001F34B"
         bar = "\U0001F36B"
         slots = [gem, cherry, banana, lemon, bar]
+        weights = [1, 1.2, 1.4, 1.8, 2]
         rankings = {
             gem: 5,
             cherry: 4,
@@ -179,7 +180,8 @@ class Memeconomy(commands.Cog):
             lemon: 2,
             bar: 1
         }
-        results = [random.choice(slots), random.choice(slots), random.choice(slots)]
+        results = [random.choices(slots, weights=weights, k=1)[0], random.choices(slots, weights=weights, k=1)[0],
+                   random.choices(slots, weights=weights, k=1)[0]]
 
         wheels = [random.choice(slots), random.choice(slots), random.choice(slots)]
         msg = await ctx.send(f"| {wheels[0]} | {wheels[1]} | {wheels[2]} |")
@@ -224,7 +226,7 @@ def get_winnings(win_list: [], rankings, bet):
     third = win_list[2]
 
     if first == second and second == third:
-        bet = bet * rankings[first] * 5
+        bet = bet * rankings[first] * len(rankings)
         return int(bet)
 
     if first == second:
