@@ -299,8 +299,12 @@ def append_images(images, direction='horizontal', bg_color=(255, 255, 255), alig
     Returns:
         Concatenated image as a new PIL image object.
     """
-    images1 = copy.deepcopy(images)
-    widths, heights = zip(*(i.size for i in images))
+    images2 = []
+    for image in images:
+        image.thumbnail((500, 500))
+        images2.append(image)
+
+    widths, heights = zip(*(i.size for i in images2))
 
     if direction == 'horizontal':
         new_width = sum(widths)
@@ -312,7 +316,7 @@ def append_images(images, direction='horizontal', bg_color=(255, 255, 255), alig
     new_im = Image.new('RGB', (new_width, new_height), color=bg_color)
 
     offset = 0
-    for im in images1:
+    for im in images2:
         if direction == 'horizontal':
             y = 0
             if alignment == 'center':
