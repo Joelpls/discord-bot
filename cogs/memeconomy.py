@@ -145,6 +145,26 @@ class Memeconomy(commands.Cog):
 
         await ctx.send(f"{payer.display_name} paid {recipient.display_name} ${amount}")
 
+    @commands.command(aliases=['bals', 'monies', 'moneyrank', 'moneyranks'])
+    async def balances(self, ctx):
+        """Show the balances of all users"""
+        bank = db[str(ctx.guild.id)]
+        all_users = bank.find({}).sort('money', -1)
+
+        user_bals = ''
+        index = 1
+        for doc in all_users:
+            try:
+                user = self.client.get_user(doc['user_id']).display_name
+                s = f'**{index})** {user}: ${doc["money"]}\n'
+                user_bals += s
+            except KeyError:
+                continue
+            index += 1
+
+        balances_embed = discord.Embed(title='Balances', description=user_bals, color=discord.Color(random.randint(1, 16777215)))
+        await ctx.send(embed=balances_embed)
+
     @commands.command(aliases=['slot', 'slotmachine'])
     async def slots(self, ctx, bet=0):
         """
