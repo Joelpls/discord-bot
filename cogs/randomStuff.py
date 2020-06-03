@@ -147,7 +147,8 @@ class RandomStuff(commands.Cog):
     async def feature_request(self, ctx, *, text):
         """Request a new feature for the discord bot!"""
         #TODO random insults
-        await ctx.send('Add it yourself, bozo! https://github.com/Joelpls/discord-bot')
+        await ctx.send("""Add it yourself, bozo! But if you insist... 
+           https://github.com/Joelpls/discord-bot/issues/new?assignees=&labels=&template=feature_request.md&title=""" + text)
         
     @commands.command(name='freegames', aliases=['freegame'])
     async def free_games(self, ctx):
