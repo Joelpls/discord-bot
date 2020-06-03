@@ -66,6 +66,7 @@ async def add_restaurant_to_db(ctx, restaurant):
     collection = db[str(ctx.guild.id)]
     post = {"op": ctx.message.author.id, "restaurant": restaurant, "channel": ctx.channel.id, "likes": 0, "dislikes": 0}
     collection.insert_one(post)
+    await ctx.send(f"Added {restaurant}")
 
 
 async def choose_restaurant(ctx):
