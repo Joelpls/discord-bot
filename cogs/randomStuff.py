@@ -143,6 +143,14 @@ class RandomStuff(commands.Cog):
     async def ban(self, ctx, name):
         await ctx.send(f'Shut up, {name.title()}')
 
+    @commands.command(name='featurerequest', aliases=['request', 'fr'])
+    async def feature_request(self, ctx, *, text):
+        """Request a new feature for the discord bot!"""
+        # TODO random insults
+        await ctx.send(f'Add it yourself, bozo! But if you insist... '
+                       f'https://github.com/Joelpls/discord-bot/issues/new?assignees=&labels=&template=feature_request.md&title='
+                       f'{text.replace(" ", "%20")}')
+        
     @commands.command(name='freegames', aliases=['freegame'])
     async def free_games(self, ctx):
         """Show this week's free games from the Epic Store"""
