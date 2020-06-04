@@ -6,6 +6,7 @@ import json
 import pymongo
 import random
 import Slots
+from num2words import num2words
 
 import Utils
 
@@ -85,9 +86,12 @@ class Memeconomy(commands.Cog):
             give_take = 'taken from'
         await ctx.send(f"${amount} has been {give_take} {member.mention}.")
 
-    @commands.command(aliases=['bal', 'bank', 'dosh', 'stash'])
+    @commands.command(aliases=['bal', 'bank', 'dosh', 'stash','BalanceEnglish','BalEng', 'BalWords'])
     async def balance(self, ctx, member: discord.Member = None):
-        """Check the balance of your account or another member"""
+        """
+        Check the balance of your account or another member.
+        'BalanceEnglish','BalEng', 'BalWords' returns the english representation of your balance.
+        """
         member = member or ctx.author
         if member.bot:
             return
@@ -95,9 +99,14 @@ class Memeconomy(commands.Cog):
         bank = db[str(ctx.guild.id)]
 
         account = bank.find_one({"user_id": member.id, "server": guild.id})
+        amount = account.get('money')
 
-        if account:
-            await ctx.send(f"{member.display_name} has ${account.get('money')}.")
+        if account and ctx.invoked_with.lower() in ['balanceenglish','baleng', 'balwords']:
+            if account:
+                amount_english = num2words(amount)
+                await ctx.send(f"{member.display_name} has {amount_english} meme bucks.")
+        elif account:
+            await ctx.send(f"{member.display_name} has ${amount}.")
         else:
             await ctx.send(f"{member.display_name} has no money.")
 
