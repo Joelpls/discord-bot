@@ -102,9 +102,8 @@ class Memeconomy(commands.Cog):
         amount = account.get('money')
 
         if account and ctx.invoked_with.lower() in ['balanceenglish','baleng', 'balwords']:
-            if account:
-                amount_english = num2words(amount)
-                await ctx.send(f"{member.display_name} has {amount_english} meme bucks.")
+            amount_english = num2words(amount)
+            await ctx.send(f"{member.display_name} has {amount_english} meme bucks.")
         elif account:
             await ctx.send(f"{member.display_name} has ${amount}.")
         else:
