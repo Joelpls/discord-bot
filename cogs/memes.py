@@ -6,6 +6,7 @@ import json
 import praw
 import prawcore
 import random
+import re
 
 
 def load_json(token):
@@ -50,9 +51,9 @@ class Memes(commands.Cog):
         if len(args) > 0:
             if args[0].isnumeric():
                 limit = int(args[0])
-                if len(args) > 1 and args[1].isalpha() or args[1].isalnum():
+                if len(args) > 1 and re.match(r'^\w+$', args[1]):
                     subreddit = args[1]
-            elif args[0].isalpha() or args[0].isalnum():
+            elif re.match(r'^\w+$', args[0]):
                 subreddit = args[0]
                 if len(args) > 1 and args[1].isnumeric():
                     limit = int(args[1])
