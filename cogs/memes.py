@@ -32,36 +32,50 @@ class Memes(commands.Cog):
         print('Memes cog ready')
 
     @commands.command(aliases=['wholesomememe', 'memes', 'wholesomememes'])
-    async def meme(self, ctx, *args):
+    async def meme(self, ctx, subreddit: str = 'wholesomememes', timeline: str = 'week', limit = '50'):
         """
         Get a random meme
-        Usage: !meme <subreddit> <# of submissions> (optional arguments)
+        Usage: !meme <subreddit> <time filter> <# of submissions> (optional arguments)
         Default subreddit is /r/wholesomememes
+        Time filter is either hour, day, week, month, year, or all. Default: week.
         Number of submissions argument determines how many of the top posts to pick a random post from. Limit 300, Default 50.
         Posts are the top of the past week.
         """
         default_limit = 50
         max_limit = 300
 
-        limit = default_limit
-        subreddit = "wholesomememes"
+        if timeline.isnumeric():
+            temp = limit
+            limit = int(timeline)
+            timeline = str(temp)
+            # Still numeric. They didn't pass in a timeline.
+            if timeline.isnumeric():
+                timeline = 'week'
 
-        # Get the subreddit and limit
-        if len(args) > 0:
-            if args[0].isnumeric():
-                limit = int(args[0])
-                if len(args) > 1 and args[1].isalpha() or args[1].isalnum():
-                    subreddit = args[1]
-            elif args[0].isalpha() or args[0].isalnum():
-                subreddit = args[0]
-                if len(args) > 1 and args[1].isnumeric():
-                    limit = int(args[1])
+        timeline = timeline.lower()
+        if timeline in ['hour', 'hourly', '1', '1h', '1hour']:
+            time_filter = 'hour'
+        elif timeline in ['day', 'daily', '24', '24h', '24hours']:
+            time_filter = 'day'
+        elif timeline in ['week', 'weekly', '7', '7d', '7days']:
+            time_filter = 'week'
+        elif timeline in ['month', 'monthly']:
+            time_filter = 'month'
+        elif timeline in ['year', 'yearly', '365', '365d', '365days']:
+            time_filter = 'year'
+        elif timeline in ['all', 'alltime', 'everything']:
+            time_filter = 'all'
+        else:
+            await ctx.send('!meme <subreddit> <time filter> <# of submissions>\n'
+                           'Time filter is either hour, day, week, month, year, or all. Default: week.')
+            return
 
+        limit = int(limit)
         if limit > max_limit:
             limit = default_limit
 
         try:
-            dankmemes = [post for post in reddit.subreddit(subreddit).top(time_filter='week', limit=limit)]
+            dankmemes = [post for post in reddit.subreddit(subreddit).top(time_filter=time_filter, limit=limit)]
             meme = random.choice(dankmemes)
         except prawcore.Redirect:
             await ctx.send("Error retrieving subreddit")
