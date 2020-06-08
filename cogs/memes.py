@@ -103,7 +103,7 @@ class Memes(commands.Cog):
         message = await ctx.send(embed=meme_embed)
 
         collection = db[str(ctx.guild.id)]
-        collection.insert_one({"message_id": message.id, "op": ctx.message.author.id})
+        collection.insert_one({"message_id": message.id, "op": ctx.message.author.id, "calling_message_id": ctx.message.id})
 
         await message.add_reaction('⬆️')
         await message.add_reaction('⬇️')
@@ -116,6 +116,7 @@ class Memes(commands.Cog):
         The message will automatically be deleted if 3 people down vote it.
         """
         collection = db[str(user.guild.id)]
+        this_channel = reaction.message.channel
 
         # If 3 people downvote this, delete it.
         if str(reaction) == '⬇️' and reaction.count >= 4:
@@ -130,7 +131,10 @@ class Memes(commands.Cog):
                 return
 
             if str(reaction) == '🗑️':
+                doc = collection.find_one({"message_id": reaction.message.id, "op": user.id})
+                calling_message = await this_channel.fetch_message(doc["calling_message_id"])
                 collection.delete_one({"message_id": reaction.message.id, "op": user.id})
+                await calling_message.delete()
                 await reaction.message.delete()
                 return
 
