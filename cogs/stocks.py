@@ -67,12 +67,14 @@ def get_basic_quote(ticker: str) -> discord.Embed:
     else:
         market_percent_string = " (" + str(change_percent) + "%)"
 
+    color = 0x85bb65  # Dollar Bill Green
     if change is None:
         change_string = ''
     elif change >= 0:
         change_string = "+" + str(change)
     else:
         change_string = str(change)
+        color = 0xFF0000  # Red
 
     desc1 = ''.join([str('${:,.2f}'.format(float(latest_price))), " ", change_string, market_percent_string])
     if high is not None and low is not None:
@@ -84,7 +86,7 @@ def get_basic_quote(ticker: str) -> discord.Embed:
         title="".join([company_name, " ($", symbol, ")"]),
         url="https://www.tradingview.com/symbols/" + symbol,
         description=''.join([desc1, '\n', desc2]),
-        color=0x85bb65
+        color=color
     )
     embed.set_footer(text=f'{q_time}')
     return embed
