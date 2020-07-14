@@ -22,12 +22,12 @@ TODO
 
 1. Build
 ```
-docker build . -t joelplz/discord-bot
+docker build . -t discord-bot
 ```
 
 2. Run
 ```
-docker run -it joelplz/discord-bot -e DISCORD_TOKEN=<discord bot token> -e MONGODB_ADDRESS=<mongodb address> -e IEX_PUB=<iex cloud key>
+docker run -e DISCORD_TOKEN=<discord bot token> -e MONGODB_ADDRESS=<mongodb address> -e IEX_PUB=<iex cloud key> discord-bot
 ```
 
 ## Usage

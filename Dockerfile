@@ -9,3 +9,6 @@ COPY bot.py /
 COPY Slots.py /
 COPY Utils.py /
 COPY cogs /cogs
+
+CMD [ "python", "./bot.py" ]
+
