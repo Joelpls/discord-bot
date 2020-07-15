@@ -18,6 +18,18 @@ A Discord bot with random fun commands.
 
 TODO
 
+### Running with docker
+
+1. Build
+```
+docker build . -t discord-bot
+```
+
+2. Run
+```
+docker run -e DISCORD_TOKEN=<discord bot token> -e MONGODB_ADDRESS=<mongodb address> -e IEX_PUB=<iex cloud key> discord-bot
+```
+
 ## Usage
 
 ### Random Images
