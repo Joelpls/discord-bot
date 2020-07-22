@@ -136,4 +136,4 @@ Earn experience by sending messages. The more active you are, the higher rank yo
 ### Stocks
 
 Type `$<ticker>` to get stock quotes.  
-I.e. `$MSFT`
+I.e. `$MSFT` 
