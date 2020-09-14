@@ -59,6 +59,10 @@ class Discover(commands.Cog):
     # Remove the message from the database if a user deletes the message from the server
     @commands.Cog.listener()
     async def on_message_delete(self, message):
+        # Don't do this in DMs
+        if not message.guild:
+            return
+
         collection = db[str(message.guild.id)]
         query = {"channel": message.channel.id, "message_id": message.id}
         collection.delete_one(query)
