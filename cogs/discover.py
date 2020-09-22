@@ -232,10 +232,11 @@ class Discover(commands.Cog):
         """See who originally posted an image: !posted <url>"""
         collection = db[str(ctx.guild.id)]
         query = {"channel": ctx.channel.id, "url": url}
-        op = collection.find_one(query)
+        db_object = collection.find_one(query)
         try:
-            user = self.client.get_user(op['op'])
-            await ctx.send(f'That was originally posted by: {user.display_name}')
+            user = self.client.get_user(db_object['op'])
+            time = db_object['_id'].generation_time
+            await ctx.send(f'That was originally posted by: **{user.display_name}** at **{time.strftime("%H:%M:%S %Z, %Y-%m-%d")}**')
         except TypeError:
             await ctx.send('I\'m not sure who posted that.')
 
