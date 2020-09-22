@@ -236,7 +236,7 @@ class Discover(commands.Cog):
         try:
             user = self.client.get_user(db_object['op'])
             time = db_object['_id'].generation_time
-            await ctx.send(f'That was originally posted by: **{user.display_name}** at **{time.strftime("%H:%M:%S %Z, %Y-%m-%d")}**')
+            await ctx.send(f'That was originally posted by **{user.display_name}** at **{time.strftime("%H:%M:%S %Z, %Y-%m-%d")}**')
         except TypeError:
             await ctx.send('I\'m not sure who posted that.')
 
