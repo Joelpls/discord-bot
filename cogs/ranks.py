@@ -168,8 +168,11 @@ class Ranks(commands.Cog):
         for doc in all_users:
             try:
                 user = self.client.get_user(doc['user_id'])
-                s = f'**{index})** {user.display_name}: {doc["xp"]} XP | Level: {get_level_from_xp(doc["xp"])}\n'
-                rank += s
+                if user is not None and not user.bot:
+                    s = f'**{index})** {user.display_name}: {doc["xp"]} XP | Level: {get_level_from_xp(doc["xp"])}\n'
+                    rank += s
+                else:
+                    continue
             except KeyError:
                 continue
             index += 1
