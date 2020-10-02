@@ -18,8 +18,7 @@ def setup(client):
 def get_magnet(search: str) -> discord.Embed:
     """
     Get a magnet link for a torrent.
-    Usage: !torrent <keywords to earch>
-    Example: !torrent last week tonight 1080p
+    Use the backend api for thepiratebay website
     """
 
     failure = discord.Embed(
@@ -64,6 +63,12 @@ class Torrents(commands.Cog):
 
     @commands.command()
     async def torrent(self, ctx, *choices: str):
+        """
+        Get a magnet link for a torrent.
+        Usage: !torrent <keywords to earch>
+        Example: !torrent last week tonight 1080p
+        """
+
         search_string = '+'.join(choices)
         magnet_embed = get_magnet(search_string)
         await ctx.send(embed=magnet_embed)
