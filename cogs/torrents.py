@@ -18,9 +18,8 @@ def setup(client):
 def get_magnet(search: str) -> discord.Embed:
     """
     Get a magnet link for a torrent.
-    Uses the backend api for 'the pirate bay' to find torrent hash and name.
-    Create the magnet link based on the information returned.
-    Present to the user with helpful information.
+    Usage: !torrent <keywords to earch>
+    Example: !torrent last week tonight 1080p
     """
 
     failure = discord.Embed(
