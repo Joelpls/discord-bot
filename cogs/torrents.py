@@ -28,11 +28,11 @@ def get_magnet(search: str) -> discord.Embed:
         url=f'https://www.thepiratebay.org/search/{search}',
         description='No Magnet Found'
     )
-    failure.set_footer(text='Better luck next time!')
 
     try:
         response = requests.get(f'https://apibay.org/q.php?q={search}')
     except requests.ConnectionError:
+        print('Unable to reach apibay.org!')
         return failure
 
     # Top torrent
@@ -51,7 +51,6 @@ def get_magnet(search: str) -> discord.Embed:
         title=target.get('name'),
         description=desc
     )
-    success.set_footer(text='I am not responsible for anything downloaded via this cog')
     return success
 
 
