@@ -7,6 +7,8 @@ from pymongo import MongoClient
 import re
 import random
 
+import Utils
+
 
 def load_json(token):
     with open('./config.json') as f:
@@ -150,7 +152,7 @@ class RandomStuff(commands.Cog):
         await ctx.send(f'Add it yourself, bozo! But if you insist... '
                        f'https://github.com/Joelpls/discord-bot/issues/new?assignees=&labels=&template=feature_request.md&title='
                        f'{text.replace(" ", "%20")}')
-        
+
     @commands.command(name='freegames', aliases=['freegame'])
     async def free_games(self, ctx):
         """Show this week's free games from the Epic Store"""
@@ -202,6 +204,17 @@ class RandomStuff(commands.Cog):
         text = f"```css\n{ctx.message.author.display_name}: >{text}\n```"
         await ctx.send(f'{text}')
         await ctx.message.delete()
+
+    @commands.command(aliases=['calculate', 'calc'])
+    async def calculator(self, ctx, *, text):
+        """Simple calculator. Add, Subtract, Multiply, Division, Powers"""
+        try:
+            result = Utils.Calc.evaluate(text)
+            await ctx.send(f'{text} = {result}')
+        except SyntaxError:
+            await ctx.send("Syntax Error")
+        except KeyError as k:
+            await ctx.send(f'Error: {str(k)}')
 
 
 def setup(client):
