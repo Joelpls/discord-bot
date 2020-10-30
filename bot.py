@@ -1,4 +1,5 @@
 import discord
+from discord import Intents
 import json
 import os
 import datetime
@@ -6,7 +7,7 @@ from discord.ext import commands, tasks
 from itertools import cycle
 from pymongo import MongoClient
 
-intents=Intents.all()
+intents = Intents.all()
 
 
 def load_json(token):
