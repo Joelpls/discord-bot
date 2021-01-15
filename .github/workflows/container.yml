@@ -17,7 +17,7 @@ jobs:
 
 
     - name: Build Docker Image
-      run: docker build -t docker.pkg.github.com/${GITHUB_REPOSITORY}/mr-torrent:${IMAGE_TAG} .
+      run: docker build -t docker.pkg.github.com/${GITHUB_REPOSITORY}/discord-bot:${IMAGE_TAG} .
     
     - name: Login
       run: docker login -u publisher -p ${DOCKER_TOKEN} docker.pkg.github.com
@@ -25,4 +25,4 @@ jobs:
         DOCKER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Push
-      run: docker push docker.pkg.github.com/${GITHUB_REPOSITORY}/mr-torrent:${IMAGE_TAG}
+      run: docker push docker.pkg.github.com/${GITHUB_REPOSITORY}/discord-bot:${IMAGE_TAG}
