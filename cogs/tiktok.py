@@ -35,7 +35,12 @@ class Tiktok(commands.Cog):
                     thread.join()
 
                 for result in self.results:
-                    await message.channel.send(file=discord.File(result))
+                    try:
+                        await message.channel.send(file=discord.File(result))
+                    except discord.errors.HTTPException:
+                        print(f'ERROR: File {result} too large')
+                    except FileNotFoundError as e:
+                        print(e)
                     if os.path.isfile(result):
                         os.remove(result)
 
