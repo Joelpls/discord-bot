@@ -29,6 +29,9 @@ class vReddit(commands.Cog):
                     if 'v.redd.it' in match:
                         thread = threading.Thread(target=self.vreddit_downloader(match))
                         threads.append(thread)
+                    elif 'reddit.com' in match:
+                        thread = threading.Thread(target=self.vreddit_downloader(match))
+                        threads.append(thread)
                 for thread in threads:
                     thread.start()
                 for thread in threads:
