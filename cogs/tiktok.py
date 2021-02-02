@@ -21,7 +21,7 @@ class Tiktok(commands.Cog):
     async def on_message(self, message):
         if not message.author.bot:
             # Get Tik Tok links
-            matches = re.findall(r'(?:(?:https\:?|ftp):\/\/)?[\w/\-?=%.]+\.[\w/\-&?=%.]+', message.content, re.MULTILINE)
+            matches = re.findall(r'(?:(?:https\:?|ftp):\/\/)?[\w/\-?=%.]+\.[\w/\-&?@=%.]+', message.content, re.MULTILINE)
 
             if len(matches) > 0:
                 threads = []
