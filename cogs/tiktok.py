@@ -9,7 +9,6 @@ class Tiktok(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-        self.results = []
         self.directory = 'cogs/tiktokvideos/'
 
     @commands.Cog.listener()
@@ -23,22 +22,28 @@ class Tiktok(commands.Cog):
             matches = re.findall(r'(?:(?:https\:?|ftp):\/\/)?[\w/\-?=%.]+\.[\w/\-&?@=%.]+', message.content, re.MULTILINE)
 
             if len(matches) > 0:
-                vids = list(set(matches))
-                self.tiktok_downloader(vids)
+                vids = []
+                for match in matches:
+                    if 'tiktok.com' in match:
+                        vids.append(match)
+                        
+                if len(vids) > 0:
+                    file_names = []
+                    self.tiktok_downloader(vids, file_names)
 
-                for result in self.results:
-                    try:
-                        await message.channel.send(file=discord.File(result))
-                    except discord.errors.HTTPException:
-                        print(f'ERROR: File {result} too large')
-                    except FileNotFoundError as e:
-                        print(e)
-                    if os.path.isfile(result):
-                        os.remove(result)
+                    for file_name in file_names:
+                        try:
+                            await message.channel.send(file=discord.File(file_name))
+                        except discord.errors.HTTPException:
+                            print(f'ERROR: File {file_name} too large')
+                        except FileNotFoundError as e:
+                            print(e)
+                        if os.path.isfile(file_name):
+                            os.remove(file_name)
 
-                self.results.clear()
+                    file_names.clear()
 
-    def tiktok_downloader(self, urls):
+    def tiktok_downloader(self, urls, file_names):
         ydl_opts = {
             'outtmpl': f'{self.directory}/%(title)s-%(id)s.%(ext)s'
         }
@@ -46,7 +51,7 @@ class Tiktok(commands.Cog):
             for url in urls:
                 info = ydl.extract_info(url, download=False)
                 download_target = ydl.prepare_filename(info)
-                self.results.append(download_target)
+                file_names.append(download_target)
             ydl.download(urls)
 
 
