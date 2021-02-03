@@ -23,7 +23,7 @@ class Tiktok(commands.Cog):
 
             if len(matches) > 0:
                 vids = []
-                for match in matches:
+                for match in set(matches):
                     if 'tiktok.com' in match:
                         vids.append(match)
                         
