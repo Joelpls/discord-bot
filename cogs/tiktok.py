@@ -1,7 +1,6 @@
 from discord.ext import commands
 import discord
 import youtube_dl
-import threading
 import os
 import re
 
@@ -24,15 +23,8 @@ class Tiktok(commands.Cog):
             matches = re.findall(r'(?:(?:https\:?|ftp):\/\/)?[\w/\-?=%.]+\.[\w/\-&?@=%.]+', message.content, re.MULTILINE)
 
             if len(matches) > 0:
-                threads = []
-                for match in set(matches):
-                    if 'tiktok.com' in match:
-                        thread = threading.Thread(target=self.tiktok_downloader(match))
-                        threads.append(thread)
-                for thread in threads:
-                    thread.start()
-                for thread in threads:
-                    thread.join()
+                vids = list(set(matches))
+                self.tiktok_downloader(vids)
 
                 for result in self.results:
                     try:
@@ -46,16 +38,16 @@ class Tiktok(commands.Cog):
 
                 self.results.clear()
 
-    def tiktok_downloader(self, url):
+    def tiktok_downloader(self, urls):
         ydl_opts = {
             'outtmpl': f'{self.directory}/%(title)s-%(id)s.%(ext)s'
         }
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-            dl = [url]
-            info = ydl.extract_info(url, download=False)
-            download_target = ydl.prepare_filename(info)
-            ydl.download(dl)
-            self.results.append(download_target)
+            for url in urls:
+                info = ydl.extract_info(url, download=False)
+                download_target = ydl.prepare_filename(info)
+                self.results.append(download_target)
+            ydl.download(urls)
 
 
 def setup(client):
