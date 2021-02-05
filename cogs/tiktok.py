@@ -58,9 +58,13 @@ class Tiktok(commands.Cog):
         }
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             for url in urls:
-                info = ydl.extract_info(url, download=False)
-                download_target = ydl.prepare_filename(info)
-                file_names.append(download_target)
+                try:
+                    info = ydl.extract_info(url, download=False)
+                    download_target = ydl.prepare_filename(info)
+                    file_names.append(download_target)
+                except youtube_dl.utils.DownloadError:
+                    urls.remove(url)
+
             ydl.download(urls)
 
 
