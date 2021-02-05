@@ -3,6 +3,7 @@ import discord
 import youtube_dl
 import os
 import re
+import praw
 
 
 class Tiktok(commands.Cog):
@@ -26,7 +27,15 @@ class Tiktok(commands.Cog):
                 for match in set(matches):
                     if 'tiktok.com' in match or 'v.redd.it' in match:
                         vids.append(match)
+                    if 'reddit.com' in match:
+                        reddit = praw.Reddit(client_id=os.environ.get('REDDIT_CLIENT_ID'),
+                                             client_secret=os.environ.get('REDDIT_CLIENT_SECRET'),
+                                             user_agent="meme bot for Discord by Joel")
                         
+                        submission = reddit.submission(url=match).url
+                        if 'v.redd.it' in submission:
+                            vids.append(submission)
+
                 if len(vids) > 0:
                     file_names = []
                     self.tiktok_downloader(vids, file_names)
