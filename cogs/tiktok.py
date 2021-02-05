@@ -31,7 +31,7 @@ class Tiktok(commands.Cog):
                         reddit = praw.Reddit(client_id=os.environ.get('REDDIT_CLIENT_ID'),
                                              client_secret=os.environ.get('REDDIT_CLIENT_SECRET'),
                                              user_agent="meme bot for Discord by Joel")
-                        
+
                         submission = reddit.submission(url=match).url
                         if 'v.redd.it' in submission:
                             vids.append(submission)
@@ -55,7 +55,8 @@ class Tiktok(commands.Cog):
     def tiktok_downloader(self, urls, file_names):
         ydl_opts = {
             'outtmpl': f'{self.directory}/%(title)s-%(id)s.%(ext)s',
-            'max_filesize' : 9000000
+            'max_filesize': 9000000,
+            'ignoreerrors': True
         }
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             for url in urls:
