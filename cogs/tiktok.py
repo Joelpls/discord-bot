@@ -54,7 +54,8 @@ class Tiktok(commands.Cog):
 
     def tiktok_downloader(self, urls, file_names):
         ydl_opts = {
-            'outtmpl': f'{self.directory}/%(title)s-%(id)s.%(ext)s'
+            'outtmpl': f'{self.directory}/%(title)s-%(id)s.%(ext)s',
+            'max_filesize' : 9000000
         }
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             for url in urls:
