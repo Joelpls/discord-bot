@@ -2,6 +2,7 @@
 from enum import Enum
 import ast
 import operator
+import datetime, pytz, holidays
 
 
 def print_progress_bar(iteration, total, prefix='', suffix='', decimals=1, length=100, fill='█'):
@@ -66,3 +67,24 @@ class Calc(ast.NodeVisitor):
         tree = ast.parse(expression)
         calc = cls()
         return calc.visit(tree.body[0])
+
+
+# Check if the stock market is open
+def is_market_closed():
+    tz = pytz.timezone('America/New_York')
+    us_holidays = holidays.US()
+
+    now = datetime.datetime.now(tz)
+    open_time = datetime.time(hour=9, minute=30, second=0)
+    close_time = datetime.time(hour=16, minute=0, second=0)
+    # If a holiday
+    if now.strftime('%Y-%m-%d') in us_holidays:
+        return True
+    # If before 0930 or after 1600
+    if (now.time() < open_time) or (now.time() > close_time):
+        return True
+    # If it's a weekend
+    if now.date().weekday() > 4:
+        return True
+
+    return False

@@ -5,6 +5,7 @@ from discord.ext import commands
 import re
 import pytz
 from datetime import datetime
+import Utils
 
 
 def load_json(token):
@@ -72,6 +73,17 @@ def get_yahoo_quote(ticker: str, response) -> discord.Embed:
         change_string = change
         color = 0xFF0000  # Red
 
+    if Utils.is_market_closed():
+        after_market = closed_market(quote_result)
+    else:
+        after_market = ''
+
+    return stock_embed(change_string, color, company_name, high, latest_price, low, market_percent_string, prev, q_time, symbol,
+                       after_market)
+
+
+def stock_embed(change_string, color, company_name, high, latest_price, low, market_percent_string, prev, q_time, symbol,
+                after_market):
     desc1 = ''.join([str('${:,.2f}'.format(float(latest_price))), " ", change_string, market_percent_string])
     if high is not None and low is not None:
         desc2 = ''.join(['High: ', '{:,.2f}'.format(float(high)), ' Low: ', '{:,.2f}'.format(float(low)), ' Prev: ',
@@ -81,11 +93,45 @@ def get_yahoo_quote(ticker: str, response) -> discord.Embed:
     embed = discord.Embed(
         title="".join([company_name, " ($", symbol, ")"]),
         url="https://finance.yahoo.com/quote/" + symbol,
-        description=''.join([desc1, '\n', desc2]),
+        description=''.join([desc1, '\n', desc2, '\n', after_market]),
         color=color
     )
     embed.set_footer(text=f'{q_time}')
     return embed
+
+
+def closed_market(quote_result):
+    postMarketPrice = quote_result.get('postMarketPrice', {}).get('raw', 0.00)
+    postMarketChange = quote_result.get('postMarketChange', {}).get('fmt', 0.00)
+    postMarketChangePercent = quote_result.get('postMarketChangePercent', {}).get('fmt', 0.00)
+    postMarketTime = quote_result.get('postMarketTime', {})
+    post_time = datetime.fromtimestamp(postMarketTime, tz=pytz.timezone('America/New_York')).strftime('%H:%M:%S %Y-%m-%d')
+
+    preMarketPrice = quote_result.get('preMarketPrice', {}).get('raw', 0.00)
+    preMarketChange = quote_result.get('preMarketChange', {}).get('fmt', 0.00)
+    preMarketChangePercent = quote_result.get('preMarketChangePercent', {}).get('fmt', 0.00)
+    preMarketTime = quote_result.get('preMarketTime', {})
+    pre_time = datetime.fromtimestamp(preMarketTime, tz=pytz.timezone('America/New_York')).strftime('%H:%M:%S %Y-%m-%d')
+
+    if float(postMarketChange) > 0:
+        post_change_string = f'+{postMarketChange}'
+        post_percent_string = f'+{postMarketChangePercent}'
+    else:
+        post_change_string = postMarketChange
+        post_percent_string = postMarketChangePercent
+
+    post_market_desc = f'Post-market: ${postMarketPrice} {post_change_string} ({post_percent_string}) {post_time}'
+
+    if float(preMarketChange) > 0:
+        pre_change_string = f'+{preMarketChange}'
+        pre_percent_string = f'+{preMarketChangePercent}'
+    else:
+        pre_change_string = preMarketChange
+        pre_percent_string = preMarketChangePercent
+
+    pre_market_desc = f'Pre-market: ${preMarketPrice} {pre_change_string} ({pre_percent_string}) {pre_time}'
+
+    return f'{pre_market_desc}\n{post_market_desc}'
 
 
 async def get_stock_price_async(ticker: str):
