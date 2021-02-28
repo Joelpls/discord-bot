@@ -105,13 +105,19 @@ def closed_market(quote_result):
     postMarketChange = quote_result.get('postMarketChange', {}).get('fmt', 0.00)
     postMarketChangePercent = quote_result.get('postMarketChangePercent', {}).get('fmt', 0.00)
     postMarketTime = quote_result.get('postMarketTime', {})
-    post_time = datetime.fromtimestamp(postMarketTime, tz=pytz.timezone('America/New_York')).strftime('%H:%M:%S %Y-%m-%d')
+    try:
+        post_time = datetime.fromtimestamp(postMarketTime, tz=pytz.timezone('America/New_York')).strftime('%H:%M:%S %Y-%m-%d')
+    except TypeError:
+        post_time = ''
 
     preMarketPrice = quote_result.get('preMarketPrice', {}).get('raw', 0.00)
     preMarketChange = quote_result.get('preMarketChange', {}).get('fmt', 0.00)
     preMarketChangePercent = quote_result.get('preMarketChangePercent', {}).get('fmt', 0.00)
     preMarketTime = quote_result.get('preMarketTime', {})
-    pre_time = datetime.fromtimestamp(preMarketTime, tz=pytz.timezone('America/New_York')).strftime('%H:%M:%S %Y-%m-%d')
+    try:
+        pre_time = datetime.fromtimestamp(preMarketTime, tz=pytz.timezone('America/New_York')).strftime('%H:%M:%S %Y-%m-%d')
+    except TypeError:
+        pre_time = ''
 
     if float(postMarketChange) > 0:
         post_change_string = f'+{postMarketChange}'
@@ -120,7 +126,10 @@ def closed_market(quote_result):
         post_change_string = postMarketChange
         post_percent_string = postMarketChangePercent
 
-    post_market_desc = f'Post-market: ${postMarketPrice} {post_change_string} ({post_percent_string}) {post_time}'
+    if postMarketPrice > 0 and post_change_string != 0:
+        post_market_desc = f'\nPost-market: ${postMarketPrice} {post_change_string} ({post_percent_string}) {post_time}'
+    else:
+        post_market_desc = ''
 
     if float(preMarketChange) > 0:
         pre_change_string = f'+{preMarketChange}'
@@ -129,9 +138,12 @@ def closed_market(quote_result):
         pre_change_string = preMarketChange
         pre_percent_string = preMarketChangePercent
 
-    pre_market_desc = f'Pre-market: ${preMarketPrice} {pre_change_string} ({pre_percent_string}) {pre_time}'
+    if preMarketPrice > 0 and pre_change_string != 0:
+        pre_market_desc = f'\nPre-market: ${preMarketPrice} {pre_change_string} ({pre_percent_string}) {pre_time}'
+    else:
+        pre_market_desc = ''
 
-    return f'{pre_market_desc}\n{post_market_desc}'
+    return f'{pre_market_desc}{post_market_desc}'
 
 
 async def get_stock_price_async(ticker: str):
