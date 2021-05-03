@@ -6,6 +6,7 @@ from discord.ext import commands
 from pymongo import MongoClient
 import re
 import random
+from dispander import dispand
 
 import Utils
 
@@ -215,6 +216,12 @@ class RandomStuff(commands.Cog):
             await ctx.send("Syntax Error")
         except KeyError as k:
             await ctx.send(f'Error: {str(k)}')
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if message.author.bot:
+            return
+        await dispand(message)
 
 
 def setup(client):

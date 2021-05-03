@@ -16,3 +16,4 @@ compuglobal==0.2.5
 youtube-dl
 pytz==2020.1
 holidays==0.10.5.2
+dispander
