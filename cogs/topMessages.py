@@ -67,6 +67,7 @@ class TopMessages(commands.Cog):
             preview = ''
             if msg.clean_content:
                 preview = f'- "{msg.clean_content}"'
+                preview = f'{preview[:40]}"'
 
             s = f'**{index})** {user.display_name} - Reactions: **{doc[reacts]}** {preview} {doc["message_link"]}\n'
             rank += s
