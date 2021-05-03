@@ -46,6 +46,7 @@ class TopMessages(commands.Cog):
 
     @commands.command(aliases=['upboats', 'upvote', 'topmessages', 'topmsg', 'msg', 'messages'])
     async def upvotes(self, ctx, include_self='True'):
+        """Shows the messages with the most reactions"""
         reacts = 'reactions_all'
         if str(include_self).lower() == "false":
             reacts = 'reactions_not_author'
