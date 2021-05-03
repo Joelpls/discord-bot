@@ -66,8 +66,7 @@ class TopMessages(commands.Cog):
             msg = await ctx.fetch_message(doc['message_id'])
             preview = ''
             if msg.clean_content:
-                preview = f'- "{msg.clean_content}"'
-                preview = f'{preview[:40]}"'
+                preview = f'- "{msg.clean_content[:40]}"'
 
             s = f'**{index})** {user.display_name} - Reactions: **{doc[reacts]}** {preview} {doc["message_link"]}\n'
             rank += s
