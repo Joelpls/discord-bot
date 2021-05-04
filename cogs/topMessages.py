@@ -1,4 +1,6 @@
 import os
+import sys
+
 import discord
 from discord.ext import commands
 from pymongo import MongoClient
@@ -35,7 +37,8 @@ class TopMessages(commands.Cog):
         other_react = 0 if msg.author.id == payload.user_id else 1
 
         utc_time = datetime.datetime.utcnow()
-        query = {"author_id": msg.author.id, "message_id": payload.message_id, "server": payload.guild_id}
+        query = {"author_id": msg.author.id, "message_id": payload.message_id, "server": payload.guild_id,
+                 "channel_id": payload.channel_id}
         insert_values = {"message_link": msg.jump_url, "date_created": utc_time}
         set_values = {"date_most_recent_reaction": utc_time}
         inc_values = {"reactions_all": sign * 1, "reactions_not_author": sign * other_react}
@@ -44,7 +47,7 @@ class TopMessages(commands.Cog):
                               {"$setOnInsert": insert_values, "$set": set_values, "$inc": inc_values},
                               upsert=True)
 
-    @commands.command(aliases=['upboats', 'upvote', 'topmessages', 'topmsg', 'msg', 'messages'])
+    @commands.command(aliases=['upboats', 'upvote', 'topmessages', 'topmsg', 'msg', 'messages', 'upboat'])
     async def upvotes(self, ctx, include_self='True'):
         """Shows the messages with the most reactions"""
         reacts = 'reactions_all'
@@ -54,8 +57,8 @@ class TopMessages(commands.Cog):
         collection = msg_db[str(ctx.guild.id)]
 
         # clean up old, low reacted to messages
-        two_weeks_ago = datetime.datetime.utcnow() - datetime.timedelta(14)
-        collection.delete_many({"date_created": {"$lte": two_weeks_ago}, "reactions_all": {"$lte": 3}})
+        one_week_ago = datetime.datetime.utcnow() - datetime.timedelta(7)
+        collection.delete_many({"date_created": {"$lte": one_week_ago}, "reactions_all": {"$lte": 5}})
 
         top_messages = collection.find({}).sort(reacts, -1).limit(10)
 
@@ -63,7 +66,16 @@ class TopMessages(commands.Cog):
         index = 1
         for doc in top_messages:
             user = self.client.get_user(doc['author_id'])
-            msg = await ctx.fetch_message(doc['message_id'])
+
+            channel = self.client.get_channel(doc['channel_id'])
+            msg = None
+            try:
+                msg = await channel.fetch_message(doc['message_id'])
+            except discord.errors.NotFound:
+                continue
+            if msg is None:
+                continue
+
             preview = ''
             if msg.clean_content:
                 preview = f'- "{msg.clean_content[:40]}"'
