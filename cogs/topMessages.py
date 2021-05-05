@@ -68,7 +68,8 @@ class TopMessages(commands.Cog):
         index = 1
         for doc in top_messages:
             user = self.client.get_user(doc['author_id'])
-
+            if user is None:
+                continue
             channel = self.client.get_channel(doc['channel_id'])
             msg = None
             try:
@@ -108,6 +109,7 @@ class TopMessages(commands.Cog):
 
         queries = []
         start_time = time.monotonic()
+        # TODO arguments to skip text channels
         for ch in ctx.guild.text_channels:
             await msg.edit(content=f'Updating #{ch.name}')
             messages = await ch.history(limit=limit).flatten()
