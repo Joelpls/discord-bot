@@ -1,11 +1,11 @@
 import os
-import sys
 
 import discord
 from discord.ext import commands
 from pymongo import MongoClient
 import datetime
 import random
+import time
 
 cluster = MongoClient(os.environ.get('MONGODB_ADDRESS'))
 msg_db = cluster['TopMessages']
@@ -39,7 +39,7 @@ class TopMessages(commands.Cog):
         utc_time = datetime.datetime.utcnow()
         query = {"author_id": msg.author.id, "message_id": payload.message_id, "server": payload.guild_id,
                  "channel_id": payload.channel_id}
-        insert_values = {"message_link": msg.jump_url, "date_created": utc_time}
+        insert_values = {"message_link": msg.jump_url, "date_created": utc_time, "bot": msg.author.bot}
         set_values = {"date_most_recent_reaction": utc_time}
         inc_values = {"reactions_all": sign * 1, "reactions_not_author": sign * other_react}
 
@@ -87,6 +87,51 @@ class TopMessages(commands.Cog):
         rank_embed = discord.Embed(title='Top Reacted to Messages', description=rank,
                                    color=discord.Color(random.randint(1, 16777215)))
         await ctx.send(embed=rank_embed)
+
+    @commands.command(hidden=True)
+    async def updatedb(self, ctx):
+        if ctx.author.id != 413139799453597698:
+            await ctx.send("Not authorized to use command")
+            return
+
+        msg = await ctx.send('Updating database')
+
+        collection = msg_db[str(ctx.guild.id)]
+        queries = []
+        start_time = time.monotonic()
+        for ch in ctx.guild.text_channels:
+            await msg.edit(content=f'Updating #{ch.name}')
+            messages = await ch.history(limit=20000).flatten()
+
+            for mess in messages:
+                total = 0
+                # Skip if less than 10 reactions
+                for r in mess.reactions:
+                    total += r.count
+                if total < 6:
+                    continue
+
+                count = 0
+                not_auth_count = 0  # number of reactions without self reacts
+
+                for r in mess.reactions:
+                    count += r.count
+                    not_auth_count += r.count
+                    async for user in r.users():
+                        if mess.author == user:
+                            not_auth_count -= 1
+
+                query = {"author_id": mess.author.id, "message_id": mess.id, "server": mess.guild.id,
+                         "channel_id": ch.id, "message_link": mess.jump_url, "date_created": mess.created_at,
+                         "reactions_all": count, "reactions_not_author": not_auth_count,
+                         "bot": mess.author.bot}
+                queries.append(query)
+
+        inserted = 0
+        if len(queries) > 0:
+            result = collection.insert_many(queries)
+            inserted = len(result.inserted_ids)
+        await msg.edit(content=f'Inserted {inserted} in {str(time.monotonic() - start_time)[:4]} seconds.')
 
 
 def setup(client):
