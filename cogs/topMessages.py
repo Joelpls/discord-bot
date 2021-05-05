@@ -48,7 +48,7 @@ class TopMessages(commands.Cog):
                               upsert=True)
 
     @commands.command(aliases=['upboats', 'upvote', 'topmessages', 'topmsg', 'msg', 'messages', 'upboat'])
-    async def upvotes(self, ctx, include_self='True'):
+    async def upvotes(self, ctx, amount=10, include_self='True'):
         """Shows the messages with the most reactions"""
         reacts = 'reactions_all'
         if str(include_self).lower() == "false":
@@ -60,7 +60,9 @@ class TopMessages(commands.Cog):
         one_week_ago = datetime.datetime.utcnow() - datetime.timedelta(7)
         collection.delete_many({"date_created": {"$lte": one_week_ago}, "reactions_all": {"$lte": 5}})
 
-        top_messages = collection.find({}).sort(reacts, -1).limit(10)
+        if amount > 20:
+            amount = 20
+        top_messages = collection.find({}).sort(reacts, -1).limit(amount)
 
         rank = ''
         index = 1
@@ -89,7 +91,7 @@ class TopMessages(commands.Cog):
         await ctx.send(embed=rank_embed)
 
     @commands.command(hidden=True)
-    async def updatedb(self, ctx, amount=10):
+    async def updatedb(self, ctx, amount=10, limit=20000):
         if ctx.author.id != 413139799453597698:
             await ctx.send("Not authorized to use command")
             return
@@ -108,7 +110,7 @@ class TopMessages(commands.Cog):
         start_time = time.monotonic()
         for ch in ctx.guild.text_channels:
             await msg.edit(content=f'Updating #{ch.name}')
-            messages = await ch.history(limit=20000).flatten()
+            messages = await ch.history(limit=limit).flatten()
 
             for mess in messages:
                 total = 0
