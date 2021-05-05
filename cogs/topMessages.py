@@ -89,7 +89,7 @@ class TopMessages(commands.Cog):
         await ctx.send(embed=rank_embed)
 
     @commands.command(hidden=True)
-    async def updatedb(self, ctx):
+    async def updatedb(self, ctx, amount=10):
         if ctx.author.id != 413139799453597698:
             await ctx.send("Not authorized to use command")
             return
@@ -105,10 +105,10 @@ class TopMessages(commands.Cog):
 
             for mess in messages:
                 total = 0
-                # Skip if less than 10 reactions
+                # Skip if less than amount in command reactions
                 for r in mess.reactions:
                     total += r.count
-                if total < 6:
+                if total < amount:
                     continue
 
                 count = 0
