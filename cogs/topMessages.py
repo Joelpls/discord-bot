@@ -97,6 +97,13 @@ class TopMessages(commands.Cog):
         msg = await ctx.send('Updating database')
 
         collection = msg_db[str(ctx.guild.id)]
+        collection.create_index([("reactions_all", -1)])
+        collection.create_index([("reactions_not_author", -1)])
+        collection.create_index([("reactions_all", -1), ("bot", 1)])
+        collection.create_index([("reactions_not_author", -1), ("bot", 1)])
+        collection.create_index([("date_created", -1)])
+        collection.create_index([("date_created", 1)])
+
         queries = []
         start_time = time.monotonic()
         for ch in ctx.guild.text_channels:
