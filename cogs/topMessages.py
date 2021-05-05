@@ -64,13 +64,22 @@ class TopMessages(commands.Cog):
             amount = 20
         top_messages = collection.find({}).sort(reacts, -1).limit(amount)
 
+        members = []
+        async for mem in ctx.guild.fetch_members():
+            members.append(mem)
+
         rank = ''
         index = 1
         for doc in top_messages:
-            user = self.client.get_user(doc['author_id'])
+            user = ctx.guild.get_member(doc['author_id'])
+            if user is None:
+                for mem in members:
+                    if mem.id == doc['author_id']:
+                        user = mem
             if user is None:
                 continue
-            channel = self.client.get_channel(doc['channel_id'])
+
+            channel = ctx.guild.get_channel(doc['channel_id'])
             msg = None
             try:
                 msg = await channel.fetch_message(doc['message_id'])
