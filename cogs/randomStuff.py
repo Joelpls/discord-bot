@@ -182,6 +182,7 @@ class RandomStuff(commands.Cog):
     async def on_message(self, message):
         """remove mobile links"""
         if not message.author.bot:
+            await dispand(message)
             '''
             # Check to see if the user is Alex
             if message.author.id == 224648266472620032:
@@ -216,12 +217,6 @@ class RandomStuff(commands.Cog):
             await ctx.send("Syntax Error")
         except KeyError as k:
             await ctx.send(f'Error: {str(k)}')
-
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        if message.author.bot:
-            return
-        await dispand(message)
 
 
 def setup(client):
