@@ -56,10 +56,21 @@ async def send_single_quote_embed(ticker, message):
 async def update_stock_embed(ticker, msg):
     await asyncio.sleep(5)
     for i in range(0, 120):
-        response = await get_stock_price_async(ticker)
-        new_embed = get_yahoo_quote(ticker, response)
-        await msg.edit(embed=new_embed)
+        await update_quote(msg, ticker, 5)
         await asyncio.sleep(5)
+    for i in range(0, 60):
+        await update_quote(msg, ticker, 10)
+    for i in range(0, 60):
+        await update_quote(msg, ticker, 20)
+    for i in range(0, 20):
+        await update_quote(msg, ticker, 60)
+
+
+async def update_quote(msg, ticker, length):
+    response = await get_stock_price_async(ticker)
+    new_embed = get_yahoo_quote(ticker, response)
+    await msg.edit(embed=new_embed)
+    await asyncio.sleep(length)
 
 
 def get_yahoo_quote(ticker: str, response) -> discord.Embed:
