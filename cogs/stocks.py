@@ -57,7 +57,6 @@ async def update_stock_embed(ticker, msg):
     await asyncio.sleep(5)
     for i in range(0, 120):
         await update_quote(msg, ticker, 5)
-        await asyncio.sleep(5)
     for i in range(0, 60):
         await update_quote(msg, ticker, 10)
     for i in range(0, 60):
