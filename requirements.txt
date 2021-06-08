@@ -7,7 +7,7 @@ us~=2.0.1
 requests-cache==0.5.2
 fuzzywuzzy==0.18.0
 python-Levenshtein==0.12.0
-Pillow==8.1.2
+Pillow==8.2.0
 praw==7.2.0
 prawcore>=1.5.1
 numpy==1.18.4
