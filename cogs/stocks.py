@@ -1,3 +1,4 @@
+import asyncio
 import aiohttp
 import discord
 import json
@@ -31,19 +32,34 @@ class Stocks(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.id != self.client.user.id:
-            matches = re.findall(pattern_quote, message.content)
+            tickers = re.findall(pattern_quote, message.content)
 
-            for ticker in set(matches):
-                try:
-                    response = await get_stock_price_async(ticker)
-                    quote_embed = get_yahoo_quote(ticker, response)
-                    await message.channel.send(embed=quote_embed)
-                except AssertionError:
-                    await message.channel.send(f'Unknown symbol: **${ticker.upper()}**')
+            for t in tickers:
+                asyncio.get_event_loop().create_task(send_single_quote_embed(t, message))
+            return
 
 
 def setup(client):
     client.add_cog(Stocks(client))
+
+
+async def send_single_quote_embed(ticker, message):
+    try:
+        response = await get_stock_price_async(ticker)
+        quote_embed = get_yahoo_quote(ticker, response)
+        msg = await message.channel.send(embed=quote_embed)
+        await update_stock_embed(ticker, msg)
+    except AssertionError:
+        await message.channel.send(f'Unknown symbol: **${ticker.upper()}**')
+
+
+async def update_stock_embed(ticker, msg):
+    await asyncio.sleep(5)
+    for i in range(0, 120):
+        response = await get_stock_price_async(ticker)
+        new_embed = get_yahoo_quote(ticker, response)
+        await msg.edit(embed=new_embed)
+        await asyncio.sleep(5)
 
 
 def get_yahoo_quote(ticker: str, response) -> discord.Embed:
@@ -52,6 +68,9 @@ def get_yahoo_quote(ticker: str, response) -> discord.Embed:
 
     symbol = quote_result.get('symbol', ticker.upper())
     company_name = quote_result.get('shortName', ticker.upper())
+    if company_name is None:
+        return discord.Embed(title=f'Failed to retrieve ${ticker.upper()}')
+
     latest_price = quote_result.get('regularMarketPrice', {}).get('raw', 0.00)
     high = quote_result.get('regularMarketDayHigh', {}).get('raw', 0.00)
     low = quote_result.get('regularMarketDayLow', {}).get('raw', 0.00)
