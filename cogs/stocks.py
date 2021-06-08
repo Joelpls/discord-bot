@@ -57,7 +57,7 @@ async def update_stock_embed(ticker, msg):
     await asyncio.sleep(5)
     for i in range(0, 120):
         await update_quote(msg, ticker, 5)
-    for i in range(0, 60): 
+    for i in range(0, 60):
         await update_quote(msg, ticker, 10)
     for i in range(0, 60):
         await update_quote(msg, ticker, 20)
@@ -66,10 +66,13 @@ async def update_stock_embed(ticker, msg):
 
 
 async def update_quote(msg, ticker, length):
-    response = await get_stock_price_async(ticker)
-    new_embed = get_yahoo_quote(ticker, response)
-    await msg.edit(embed=new_embed)
-    await asyncio.sleep(length)
+    try:
+        response = await get_stock_price_async(ticker)
+        new_embed = get_yahoo_quote(ticker, response)
+        await msg.edit(embed=new_embed)
+        await asyncio.sleep(length)
+    except AttributeError:
+        return
 
 
 def get_yahoo_quote(ticker: str, response) -> discord.Embed:
