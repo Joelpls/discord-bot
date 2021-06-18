@@ -57,8 +57,8 @@ async def update_stock_embed(ticker, msg):
     await asyncio.sleep(5)
 
     while not Utils.is_market_closed \
-            and not Utils.post_market_closed() \
-            and not Utils.pre_market_closed():
+            or not Utils.post_market_closed() \
+            or not Utils.pre_market_closed():
         await update_quote(msg, ticker, 5)
 
 
