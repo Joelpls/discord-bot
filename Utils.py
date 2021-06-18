@@ -88,3 +88,43 @@ def is_market_closed():
         return True
 
     return False
+
+
+def pre_market_closed():
+    tz = pytz.timezone('America/New_York')
+    us_holidays = holidays.US()
+
+    now = datetime.datetime.now(tz)
+    pre_open_time = datetime.time(hour=4, minute=00, second=0)
+    pre_close_time = datetime.time(hour=9, minute=30, second=00)
+
+    # If a holiday
+    if now.strftime('%Y-%m-%d') in us_holidays:
+        return True
+    if now.time() < pre_open_time or now.time() > pre_close_time:
+        return True
+    # If it's a weekend
+    if now.date().weekday() > 4:
+        return True
+
+    return False
+
+
+def post_market_closed():
+    tz = pytz.timezone('America/New_York')
+    us_holidays = holidays.US()
+
+    now = datetime.datetime.now(tz)
+    post_open_time = datetime.time(hour=16, minute=00, second=0)
+    post_close_time = datetime.time(hour=20, minute=00, second=00)
+
+    # If a holiday
+    if now.strftime('%Y-%m-%d') in us_holidays:
+        return True
+    if now.time() < post_open_time or now.time() > post_close_time:
+        return True
+    # If it's a weekend
+    if now.date().weekday() > 4:
+        return True
+
+    return False

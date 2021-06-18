@@ -55,14 +55,11 @@ async def send_single_quote_embed(ticker, message):
 
 async def update_stock_embed(ticker, msg):
     await asyncio.sleep(5)
-    for i in range(0, 120):
+
+    while not Utils.is_market_closed \
+            and not Utils.post_market_closed() \
+            and not Utils.pre_market_closed():
         await update_quote(msg, ticker, 5)
-    for i in range(0, 60):
-        await update_quote(msg, ticker, 10)
-    for i in range(0, 60):
-        await update_quote(msg, ticker, 20)
-    for i in range(0, 20):
-        await update_quote(msg, ticker, 60)
 
 
 async def update_quote(msg, ticker, length):
