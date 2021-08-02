@@ -49,8 +49,8 @@ class Counting(commands.Cog):
 
             # Check if it's 1 more
             current_num = int(content)
-            if current_num is not previous_num + 1 \
-                    and current_num_binary is not previous_num_binary + 1:
+            if current_num != previous_num + 1 \
+                    and current_num_binary != previous_num_binary + 1:
                 await message.delete()
 
                 # Send DM of correct number.
