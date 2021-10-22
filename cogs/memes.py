@@ -76,6 +76,8 @@ class Memes(commands.Cog):
 
         try:
             dankmemes = [post for post in reddit.subreddit(subreddit).top(time_filter=time_filter, limit=limit)]
+            if len(dankmemes) == 0:
+                dankmemes = [post for post in reddit.subreddit(subreddit).top(time_filter='all', limit=limit)]
             meme = random.choice(dankmemes)
         except prawcore.Redirect:
             await ctx.send("Error retrieving subreddit")
