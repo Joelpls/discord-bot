@@ -91,7 +91,8 @@ class Memes(commands.Cog):
         while index < 20 and meme.over_18:
             meme = random.choice(dankmemes)
             index += 1
-        if meme.over_18:
+        allow_nsfw = [900975770539806761]
+        if meme.over_18 and ctx.guild.id not in allow_nsfw:
             await ctx.send("Is that subreddit appropriate?")
             return
 
