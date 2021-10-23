@@ -96,10 +96,18 @@ class Memes(commands.Cog):
             await ctx.send("Is that subreddit appropriate?")
             return
 
-        meme_embed = discord.Embed(title=meme.title[0:255],
-                                   description=f'{meme.ups:,} ⬆️',
-                                   url=f'https://www.reddit.com{meme.permalink}',
-                                   color=random.randint(1, 16777215))
+        if not meme.selftext:
+            meme_embed = discord.Embed(title=meme.title[0:255],
+                                       description=f'{meme.ups:,} ⬆️',
+                                       url=f'https://www.reddit.com{meme.permalink}',
+                                       color=random.randint(1, 16777215))
+        else:
+            meme_embed = discord.Embed(title=meme.title[0:255],
+                                       description=f'{meme.ups:,} ⬆️\n'
+                                                   f'{meme.selftext[:4000]}',
+                                       url=f'https://www.reddit.com{meme.permalink}',
+                                       color=random.randint(1, 16777215))
+
         meme_embed.set_image(url=meme.url)
         meme_embed.set_footer(text=meme.subreddit_name_prefixed)
 
