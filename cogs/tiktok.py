@@ -6,7 +6,7 @@ import re
 import praw
 import asyncio
 import uuid
-
+import yt_dlp
 
 class Tiktok(commands.Cog):
 
@@ -81,13 +81,13 @@ class Tiktok(commands.Cog):
             'max_filesize': 9000000,
             'ignoreerrors': True
         }
-        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             for url in urls:
                 try:
                     info = ydl.extract_info(url, download=False)
                     download_target = ydl.prepare_filename(info)
                     file_names.append(download_target)
-                except youtube_dl.utils.DownloadError:
+                except yt_dlp.utils.DownloadError:
                     urls.remove(url)
 
             ydl.download(urls)
