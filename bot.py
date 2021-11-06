@@ -6,6 +6,8 @@ import datetime
 from discord.ext import commands, tasks
 from itertools import cycle
 from pymongo import MongoClient
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 intents = Intents.all()
 
@@ -16,6 +18,8 @@ def load_json(token):
     return config.get(token)
 
 
+scheduler = AsyncIOScheduler()
+
 cluster = MongoClient(os.environ.get('MONGODB_ADDRESS'))
 db = cluster['Logs']
 
@@ -25,9 +29,25 @@ for filename in os.listdir('./cogs'):
         client.load_extension(f'cogs.{filename[:-3]}')
 
 
+async def send_free_game_message():
+    channels = [751131240203026566, 688900848956342324]  # TODO get channel names from database
+    for ch in channels:
+        channel = client.get_channel(ch)
+        await channel.send('https://www.epicgames.com/store/en-US/free-games')
+
+
+async def send_contests():
+    channel = client.get_channel(688901859628548189)
+    await channel.send('https://southwest.promo.eprize.com/50days/')
+    await channel.send('https://disneyremysratatouilleadventuresweepstakes.com/ ')
+
+
 @client.event
 async def on_ready():
     # change_status.start()
+    scheduler.start()
+    scheduler.add_job(send_free_game_message, CronTrigger(day_of_week='thu', hour=11, timezone='US/Eastern'))
+    scheduler.add_job(send_contests, CronTrigger(hour=11, minute=30, timezone='US/Eastern'))
     print('Bot is ready')
 
 
