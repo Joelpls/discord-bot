@@ -38,8 +38,7 @@ async def send_free_game_message():
 
 async def send_contests():
     channel = client.get_channel(688901859628548189)
-    await channel.send('https://southwest.promo.eprize.com/50days/')
-    await channel.send('https://disneyremysratatouilleadventuresweepstakes.com/ ')
+    await channel.send('https://disneyremysratatouilleadventuresweepstakes.com/')
 
 
 @client.event
