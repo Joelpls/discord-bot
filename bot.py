@@ -36,17 +36,11 @@ async def send_free_game_message():
         await channel.send('https://www.epicgames.com/store/en-US/free-games')
 
 
-async def send_contests():
-    channel = client.get_channel(688901859628548189)
-    await channel.send('https://disneyremysratatouilleadventuresweepstakes.com/')
-
-
 @client.event
 async def on_ready():
     # change_status.start()
     scheduler.start()
     scheduler.add_job(send_free_game_message, CronTrigger(day_of_week='thu', hour=11, timezone='US/Eastern'))
-    scheduler.add_job(send_contests, CronTrigger(hour=11, minute=30, timezone='US/Eastern'))
     print('Bot is ready')
 
 
