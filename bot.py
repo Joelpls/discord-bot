@@ -40,7 +40,7 @@ async def send_free_game_message():
 async def on_ready():
     # change_status.start()
     scheduler.start()
-    scheduler.add_job(send_free_game_message, CronTrigger(day_of_week='thu', hour=11, timezone='US/Eastern'))
+    scheduler.add_job(send_free_game_message, CronTrigger(hour=11, timezone='US/Eastern'))
     print('Bot is ready')
 
 
