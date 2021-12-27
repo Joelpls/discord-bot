@@ -19,4 +19,4 @@ holidays==0.10.5.2
 dispander
 yt_dlp
 APScheduler==3.8.1
-pandas==1.0.3
+pandas
