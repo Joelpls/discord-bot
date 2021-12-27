@@ -49,6 +49,7 @@ class WaitTimes(commands.Cog):
     async def waits(self, ctx, *, ride=None):
         if ride is None:
             await ctx.send('Please choose an attraction')
+            return
 
         await self.get_parks_waittime()
         self.make_spellings()
