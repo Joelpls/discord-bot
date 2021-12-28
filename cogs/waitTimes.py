@@ -69,8 +69,11 @@ class WaitTimes(commands.Cog):
         status = ride_df.status
         active = ride_df.active
         last_update = ride_df.lastUpdate.to_pydatetime()
-        last_update = datetime.datetime(last_update.year, last_update.month, last_update.day,
+        if not pd.isnull(last_update):
+            last_update = datetime.datetime(last_update.year, last_update.month, last_update.day,
                                         last_update.hour, last_update.minute, last_update.second)
+        else:
+            last_update = ''
 
         desc = ""
         if (status is None and not active) or wait_time is None or math.isnan(wait_time):
@@ -81,7 +84,7 @@ class WaitTimes(commands.Cog):
             desc = f'**{int(wait_time)}** minutes\n' \
                    f'Status: {status}'
 
-        desc += f'\n\n{" ".join(park)}'
+        desc += f'\n\n{" ".join(park).strip()}'
 
         embed = discord.Embed(
             title=name,
