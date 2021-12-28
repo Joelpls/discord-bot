@@ -53,8 +53,16 @@ class WaitTimes(commands.Cog):
 
     @commands.command(aliases=['wait', 'queue', 'queues', 'ride', 'rides', 'attraction', 'attractions'])
     async def waits(self, ctx, *, ride=None):
+        """
+        Get wait times for Orlando theme park attractions.
+        """
         if ride is None:
-            await ctx.send('Please choose an attraction')
+            await ctx.send('Please choose an attraction.')
+            return
+        if ride.lower() == "update":
+            await ctx.send('Wait times updated.')
+            if self.last_retrieve != 0:
+                await self.get_parks_waittime()
             return
 
         if time.time() - self.last_retrieve > self._CACHE_TIME:
