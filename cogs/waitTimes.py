@@ -1,6 +1,7 @@
 import math
 import random
 import re
+import time
 
 import aiohttp
 import discord
@@ -15,6 +16,7 @@ from fuzzywuzzy import process
 class WaitTimes(commands.Cog):
 
     def __init__(self, client):
+        self._CACHE_TIME = 60 * 5  # minutes
         self.client = client
         self.parks = ["WaltDisneyWorldMagicKingdom",
                       "WaltDisneyWorldEpcot",
@@ -24,6 +26,7 @@ class WaitTimes(commands.Cog):
                       "UniversalStudiosFlorida"]
         self.df_parks_waittime = pd.DataFrame()
         self.spellings = []
+        self.last_retrieve = 0
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -40,6 +43,9 @@ class WaitTimes(commands.Cog):
             df['lastUpdate'] = pd.to_datetime(df['lastUpdate']).dt.tz_convert('America/New_York')
             self.df_parks_waittime = self.df_parks_waittime.append(df)
 
+        self.make_spellings()
+        self.last_retrieve = time.time()
+
         return self
 
     def make_spellings(self):
@@ -51,14 +57,19 @@ class WaitTimes(commands.Cog):
             await ctx.send('Please choose an attraction')
             return
 
-        await self.get_parks_waittime()
-        self.make_spellings()
+        if time.time() - self.last_retrieve > self._CACHE_TIME:
+            await self.get_parks_waittime()
+            got_cache = True
+        else:
+            got_cache = False
+
         extract_spelling = process.extract(ride, self.spellings, limit=1)
         closest_word = extract_spelling[0][0]
 
         data = self.df_parks_waittime
-        data.set_index("name", inplace=True)
-        data.head()
+        if got_cache:
+            data.set_index("name", inplace=True)
+            data.head()
         ride_embed = self.make_ride_embed(data.loc[closest_word])
         await ctx.send(embed=ride_embed)
 
@@ -71,7 +82,7 @@ class WaitTimes(commands.Cog):
         last_update = ride_df.lastUpdate.to_pydatetime()
         if not pd.isnull(last_update):
             last_update = datetime.datetime(last_update.year, last_update.month, last_update.day,
-                                        last_update.hour, last_update.minute, last_update.second)
+                                            last_update.hour, last_update.minute, last_update.second)
         else:
             last_update = ''
 
