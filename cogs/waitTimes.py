@@ -16,7 +16,7 @@ from fuzzywuzzy import process
 class WaitTimes(commands.Cog):
 
     def __init__(self, client):
-        self._CACHE_TIME = 60 * 5  # minutes
+        self._CACHE_TIME = 60 * 3  # minutes
         self.client = client
         self.parks = ["WaltDisneyWorldMagicKingdom",
                       "WaltDisneyWorldEpcot",
