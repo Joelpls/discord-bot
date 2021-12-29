@@ -26,7 +26,7 @@ class Ranks(commands.Cog):
     async def on_ready(self):
         print('Ranks cog ready')
 
-    @commands.command()
+    @commands.command(aliases=['rank'])
     async def level(self, ctx, member: discord.Member = None):
         """See your level or another member's"""
         member = member or ctx.author
@@ -86,7 +86,7 @@ class Ranks(commands.Cog):
             await message.channel.send(f"{xp} point message!")
 
         # check if they leveled up
-        await check_level_up(doc['xp'], message, player, xp, notifications)
+        await check_level_up(doc['xp'], message, player, xp, notifications, self.client)
 
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
@@ -128,7 +128,7 @@ class Ranks(commands.Cog):
             except KeyError:
                 notifications = True
             # check if they leveled up
-            await check_level_up(doc['xp'], reaction.message, user, xp_gained, notifications)
+            await check_level_up(doc['xp'], reaction.message, user, xp_gained, notifications, self.client)
 
         if receiver_doc is not None:
             try:
@@ -138,7 +138,7 @@ class Ranks(commands.Cog):
             except KeyError:
                 receiver_notifs = True
             # check if receiver leveled up
-            await check_level_up(receiver_doc['xp'], reaction.message, reaction.message.author, xp_gained, receiver_notifs)
+            await check_level_up(receiver_doc['xp'], reaction.message, reaction.message.author, xp_gained, receiver_notifs, self.client)
 
     @commands.Cog.listener()
     async def on_reaction_remove(self, reaction, user):
@@ -157,8 +157,8 @@ class Ranks(commands.Cog):
                                           {"$inc": {"xp": xp_lost, "reactions": -1}}, upsert=True)]
         database.bulk_write(bulk_updates)
 
-    @commands.command(aliases=['ranks', 'ranking', 'rankings'])
-    async def rank(self, ctx):
+    @commands.command(aliases=['rankings', 'levels'])
+    async def ranks(self, ctx):
         """Shows the ranks of the server's users."""
         database = db[str(ctx.guild.id)]
         all_users = database.find({}).sort('xp', -1)
@@ -180,7 +180,7 @@ class Ranks(commands.Cog):
         rank_embed = discord.Embed(title='Rank', description=rank, color=discord.Color(random.randint(1, 16777215)))
         await ctx.send(embed=rank_embed)
 
-    @commands.command(aliases=['silencelevels', 'silencelevel', 'silentlevel'])
+    @commands.command(aliases=['silencelevels', 'silencelevel', 'silentlevel', 'mutelevels', 'mutelevel'])
     async def silentlevels(self, ctx):
         """
         Stop receiving notifications on your own level rank up.
@@ -308,14 +308,18 @@ def get_xp(bonus):
     return xp
 
 
-async def check_level_up(curr_xp, message, player, xp_gained, notifications):
+async def check_level_up(curr_xp, message, player, xp_gained, notifications, client):
     if notifications is False:
         return
 
     curr_level = get_level_from_xp(curr_xp)
     new_level = get_level_from_xp(curr_xp + xp_gained)
     if new_level != curr_level:
-        await message.channel.send(f'{player.display_name} is now level {new_level}!')
+        if message.guild.id == 688845616000139270:
+            ch = client.get_channel(697176979694288996)
+            await ch.send(f'<@{player.id}> is now level {new_level}!')
+        else:
+            await message.channel.send(f'{player.display_name} is now level {new_level}!')
 
 
 def get_color(rank):
