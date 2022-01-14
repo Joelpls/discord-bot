@@ -25,7 +25,7 @@ db = cluster['Logs']
 
 client = commands.Bot(command_prefix=load_json('prefix'), case_insensitive=True)
 for filename in os.listdir('./cogs'):
-    if filename.endswith('.py'):
+    if filename.endswith('.py') and not filename.startswith('tiktok'):
         client.load_extension(f'cogs.{filename[:-3]}')
 
 
