@@ -20,3 +20,4 @@ dispander
 git+git://github.com/yt-dlp/yt-dlp.git@master#egg=yt_dlp
 APScheduler==3.8.1
 pandas
+urlexpander
