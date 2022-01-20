@@ -82,7 +82,7 @@ class Tiktok(commands.Cog):
                     #     for m in msgs:
                     #         await m.delete()
 
-    @commands.command()
+    @commands.command(hidden=True)
     async def deletemsg(self, ctx, msg_id):
         if ctx.author.id == 413139799453597698:
             msg = await ctx.fetch_message(msg_id)
