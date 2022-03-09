@@ -34,7 +34,7 @@ class Stocks(commands.Cog):
         if message.author.id != self.client.user.id:
             tickers = re.findall(pattern_quote, message.content)
 
-            for t in set(tickers):
+            for t in set(t.lower() for t in tickers):
                 asyncio.get_event_loop().create_task(send_single_quote_embed(t, message))
             return
 
