@@ -28,7 +28,8 @@ class Counting(commands.Cog):
         if message.author.bot \
                 or not content.isnumeric() \
                 or "-" in content \
-                or (content.startswith('0') and len(content) > 1):
+                or (content.startswith('0') and len(content) > 1)\
+                or len(message.attachments) > 0:
             await message.delete()
             return
 
