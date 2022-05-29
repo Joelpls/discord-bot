@@ -3,6 +3,9 @@ from enum import Enum
 import ast
 import operator
 import datetime, pytz, holidays
+import requests
+
+TIMEOUT = 5
 
 
 def print_progress_bar(iteration, total, prefix='', suffix='', decimals=1, length=100, fill='█'):
@@ -128,3 +131,36 @@ def post_market_closed():
         return True
 
     return False
+
+
+def url_expander(short_url):
+    try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+            'Accept-Encoding': 'none',
+            'Accept-Language': 'en-US,en;q=0.8',
+            'Connection': 'keep-alive'}
+        url_response = requests.get(url=short_url, headers=headers, timeout=TIMEOUT)
+        return url_response.url
+    except requests.exceptions.ConnectionError as e:
+        print(e)
+        raise requests.exceptions.ConnectionError
+    except requests.exceptions.ReadTimeout as e:
+        print(e)
+        raise requests.exceptions.ReadTimeout
+
+
+def parse_full_link(url):
+    if 'video' in url or 'tiktok.com/v' in url:
+        return url
+
+    headers = {
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.64 Safari/537.36'}
+    # headers = {
+    #     'User-Agent': f'(Linux; U; Android 10; en_US; Pixel 4; Build/QQ3A.200805.001; Cronet/58.0.2991.0)'}
+
+    r = requests.head(url, timeout=TIMEOUT, headers=headers)
+    print(r.headers["location"])
+    return r.headers["location"]

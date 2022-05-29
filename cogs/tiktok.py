@@ -8,7 +8,7 @@ import asyncio
 import uuid
 import yt_dlp
 import urlexpander
-
+import Utils
 
 class Tiktok(commands.Cog):
 
@@ -30,7 +30,7 @@ class Tiktok(commands.Cog):
                 vids = []
                 for match in set(matches):
                     if 'tiktok.com' in match:
-                        tiktokurl = urlexpander.expand(match)
+                        tiktokurl = Utils.parse_full_link(match)
                         if 'video' not in tiktokurl:
                             continue
                         vids.append(tiktokurl)
@@ -92,7 +92,7 @@ class Tiktok(commands.Cog):
     def tiktok_downloader(self, urls, file_names):
         ydl_opts = {
             'format': '[vcodec=h264]',
-            'outtmpl': f'{self.directory}/%(title)s-%(id)s-{str(uuid.uuid4())[:8]}.%(ext)s',
+            'outtmpl': f'{self.directory}/%(uploader)s-%(uploader_id)s-%(id)s-%(upload_date)s-{str(uuid.uuid4())[:4]}.%(ext)s',
             'max_filesize': 9000000,
             'ignoreerrors': True,
             'verbose': True
