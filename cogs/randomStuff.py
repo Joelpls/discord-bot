@@ -218,6 +218,10 @@ class RandomStuff(commands.Cog):
         except KeyError as k:
             await ctx.send(f'Error: {str(k)}')
 
+    @commands.command()
+    async def blink(self, ctx):
+        await ctx.send(file=discord.File("blinking_guy.gif"))
+
 
 def setup(client):
     client.add_cog(RandomStuff(client))
