@@ -221,7 +221,7 @@ class RandomStuff(commands.Cog):
     @commands.command()
     async def blink(self, ctx):
         await ctx.message.delete()
-        await ctx.send(file=discord.File("blinking_guy.gif"))
+        await ctx.send(f"{ctx.message.author.display_name}:", file=discord.File("blinking_guy.gif"))
 
 
 def setup(client):
