@@ -93,13 +93,13 @@ class Tiktok(commands.Cog):
         ydl_opts = {
             'format': '[vcodec=h264]',
             'outtmpl': f'{self.directory}/%(uploader)s-%(uploader_id)s-%(id)s-%(upload_date)s-{str(uuid.uuid4())[:4]}.%(ext)s',
-            'max_filesize': 9000000,
+            'max_filesize': 26000000,
             'ignoreerrors': True,
             'verbose': True
         }
         ydl_opts_not_tiktok = {
             'outtmpl': f'{self.directory}/%(title)s-%(id)s-{str(uuid.uuid4())[:8]}.%(ext)s',
-            'max_filesize': 9000000,
+            'max_filesize': 26000000,
             'ignoreerrors': True,
             'verbose': True
         }
