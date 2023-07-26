@@ -15,7 +15,7 @@ def load_json(token):
     return config.get(token)
 
 
-_YAHOO_URL = 'https://query1.finance.yahoo.com/v10/finance/quoteSummary/'
+_YAHOO_URL = 'https://query2.finance.yahoo.com/v11/finance/quoteSummary/'
 
 pattern_quote = re.compile(r'[$]([A-Za-z]+)[+]?')
 
@@ -176,6 +176,6 @@ def closed_market(quote_result):
 
 async def get_stock_price_async(ticker: str):
     async with aiohttp.ClientSession() as session:
-        async with session.get(_YAHOO_URL + f'{ticker}?modules=price') as response:
+        async with session.get(_YAHOO_URL + f'?symbol={ticker}&modules=price') as response:
             assert 200 == response.status, response.reason
             return await response.json()
