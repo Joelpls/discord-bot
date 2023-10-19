@@ -34,7 +34,7 @@ class Tiktok(commands.Cog):
                         if 'video' not in tiktokurl:
                             continue
                         vids.append(tiktokurl)
-                    if 'v.redd.it' in match or 'twitter.com' in match:
+                    if 'v.redd.it' in match or 'twitter.com' in match or 'x.com' in match:
                         vids.append(match)
                     if 'reddit.com' in match:
                         reddit = praw.Reddit(client_id=os.environ.get('REDDIT_CLIENT_ID'),
