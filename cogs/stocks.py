@@ -17,7 +17,7 @@ def load_json(token):
 
 _YAHOO_URL = 'https://query2.finance.yahoo.com/v11/finance/quoteSummary/'
 
-pattern_quote = re.compile(r'[$](\^?[A-Za-z]+)[+]?')
+pattern_quote = re.compile(r'[$]([A-Za-z^][^\s]*)')
 
 
 class Stocks(commands.Cog):
