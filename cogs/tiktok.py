@@ -115,6 +115,7 @@ class Tiktok(commands.Cog):
         not_tiktoks = [x for x in urls if 'tiktok.com' not in x and 'twitter.com' not in x and 'x.com' not in x]
 
         self.yt_downloader(file_names, tiktok_urls, ydl_opts)
+        self.yt_downloader(file_names, twitter_and_x_urls, ydl_opts_twitter_x)
         self.yt_downloader(file_names, not_tiktoks, ydl_opts_not_tiktok)
 
     def yt_downloader(self, file_names, urls, ydl_opts):
