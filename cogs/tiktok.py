@@ -97,6 +97,13 @@ class Tiktok(commands.Cog):
             'ignoreerrors': True,
             'verbose': True
         }
+        ydl_opts_twitter_x = {
+            'outtmpl': f'{self.directory}/%(title)s-%(id)s-{str(uuid.uuid4())[:8]}.%(ext)s',
+            'max_filesize': 26000000,
+            'ignoreerrors': True,
+            'verbose': True,
+            'extractor_args': 'twitter:api=syndication'
+        }
         ydl_opts_not_tiktok = {
             'outtmpl': f'{self.directory}/%(title)s-%(id)s-{str(uuid.uuid4())[:8]}.%(ext)s',
             'max_filesize': 26000000,
@@ -104,7 +111,8 @@ class Tiktok(commands.Cog):
             'verbose': True
         }
         tiktok_urls = [x for x in urls if 'tiktok.com' in x]
-        not_tiktoks = [x for x in urls if 'tiktok.com' not in x]
+        twitter_and_x_urls = [x for x in urls if 'twitter.com' in x or 'x.com' in x]
+        not_tiktoks = [x for x in urls if 'tiktok.com' not in x and 'twitter.com' not in x and 'x.com' not in x]
 
         self.yt_downloader(file_names, tiktok_urls, ydl_opts)
         self.yt_downloader(file_names, not_tiktoks, ydl_opts_not_tiktok)
