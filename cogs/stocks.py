@@ -89,13 +89,13 @@ def get_yahoo_quote(ticker: str, response) -> discord.Embed:
     quote_time = quote_result.get('regularMarketTime', {})
     q_time = datetime.fromtimestamp(quote_time, tz=pytz.timezone('America/New_York')).strftime('%H:%M:%S %Y-%m-%d')
 
-    if float(change_percent.strip('%')) >= 0:
+    if float(change_percent.strip('%,')) >= 0:
         market_percent_string = " (+" + change_percent + ")"
     else:
         market_percent_string = " (" + change_percent + ")"
 
     color = 0x85bb65  # Dollar Bill Green
-    if float(change.strip('%')) >= 0:
+    if float(change.strip('%,')) >= 0:
         change_string = "+" + change
     else:
         change_string = change
