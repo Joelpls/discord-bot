@@ -1,6 +1,6 @@
 async-timeout==3.0.1
 discord.py==1.5.1
-dnspython==1.16.0
+dnspython==2.6.1
 pymongo==3.10.1
 requests>=2.23.0
 us~=2.0.1
