@@ -91,7 +91,7 @@ class Tiktok(commands.Cog):
 
     def tiktok_downloader(self, urls, file_names):
         ydl_opts = {
-            'outtmpl': f'{self.directory}/%(uploader)s-%(uploader_id)s-%(id)s-%(upload_date)s-{str(uuid.uuid4())[:4]}.%(ext)s',
+            'outtmpl': f'{self.directory}/%(uploader)s-{str(uuid.uuid4())[:4]}.%(ext)s',
             'max_filesize': 26000000,
             'ignoreerrors': True,
             'verbose': True
