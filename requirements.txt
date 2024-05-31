@@ -17,7 +17,7 @@ youtube-dl
 pytz==2020.1
 holidays==0.10.5.2
 dispander
-yt_dlp>=2024.04.09
+yt_dlp>=2024.05.27
 APScheduler==3.8.1
 pandas
 urlexpander
