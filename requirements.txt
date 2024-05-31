@@ -2,7 +2,7 @@ async-timeout==3.0.1
 discord.py==1.5.1
 dnspython==1.16.0
 pymongo==3.10.1
-requests>=2.23.0
+requests>=2.25.0
 us~=2.0.1
 requests-cache==0.5.2
 fuzzywuzzy==0.18.0
@@ -21,3 +21,4 @@ yt_dlp>=2024.05.27
 APScheduler==3.8.1
 pandas
 urlexpander
+brotli>=1.0.9  
