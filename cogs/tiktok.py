@@ -91,7 +91,7 @@ class Tiktok(commands.Cog):
 
     def tiktok_downloader(self, urls, file_names):
         ydl_opts = {
-            'format': 'bestvideo[ext=mp4][vcodec=h264]',  
+            'format': 'bestvideo[ext=mp4][vcodec^=h264]+bestaudio[ext=m4a]/best[ext=mp4][vcodec^=h264]',   
             'outtmpl': f'{self.directory}/%(uploader)s-{str(uuid.uuid4())[:4]}.%(ext)s',
             'max_filesize': 26000000,
             'ignoreerrors': True,
