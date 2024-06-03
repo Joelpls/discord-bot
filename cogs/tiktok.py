@@ -95,7 +95,13 @@ class Tiktok(commands.Cog):
             'outtmpl': f'{self.directory}/%(uploader)s-{str(uuid.uuid4())[:4]}.%(ext)s',
             'max_filesize': 26000000,
             'ignoreerrors': True,
-            'verbose': True
+            'verbose': True,
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.85 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-us,en;q=0.5',
+                'Accept-Encoding': 'gzip, deflate, br'
+            }
         }
         ydl_opts_twitter_x = {
             'outtmpl': f'{self.directory}/%(title)s-%(id)s-{str(uuid.uuid4())[:8]}.%(ext)s',
