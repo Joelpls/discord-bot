@@ -31,12 +31,15 @@ class Tiktok(commands.Cog):
                 for match in set(matches):
                     if 'tiktok.com' in match:
                         tiktokurl = Utils.parse_full_link(match)
-                        if 'video' not in tiktokurl:
+                        if 'video' not in tiktokurl and 'tiktok.com/v' not in tiktokurl:
                             continue
-                        vids.append(tiktokurl)
-                    if 'v.redd.it' in match or 'twitter.com' in match or 'x.com' in match:
+                        tiktok_video_id = parse_video_id(tiktokurl)
+                        tikwm_url = f"https://www.tikwm.com/video/media/hdplay/{tiktok_video_id}.mp4"
+                        await message.channel.send(tikwm_url)
+                        # vids.append(tiktokurl)
+                    elif 'v.redd.it' in match or 'twitter.com' in match or 'x.com' in match:
                         vids.append(match)
-                    if 'reddit.com' in match:
+                    elif 'reddit.com' in match:
                         reddit = praw.Reddit(client_id=os.environ.get('REDDIT_CLIENT_ID'),
                                              client_secret=os.environ.get('REDDIT_CLIENT_SECRET'),
                                              user_agent="meme bot for Discord by Joel")
@@ -116,11 +119,12 @@ class Tiktok(commands.Cog):
             'ignoreerrors': True,
             'verbose': True
         }
-        tiktok_urls = [x for x in urls if 'tiktok.com' in x]
+
+        # tiktok_urls = [x for x in urls if 'tiktok.com' in x]
         twitter_and_x_urls = [x for x in urls if 'twitter.com' in x or 'x.com' in x]
         not_tiktoks = [x for x in urls if 'tiktok.com' not in x and 'twitter.com' not in x and 'x.com' not in x]
 
-        self.yt_downloader(file_names, tiktok_urls, ydl_opts)
+        # self.yt_downloader(file_names, tiktok_urls, ydl_opts)
         self.yt_downloader(file_names, twitter_and_x_urls, ydl_opts_twitter_x)
         self.yt_downloader(file_names, not_tiktoks, ydl_opts_not_tiktok)
 
@@ -136,6 +140,44 @@ class Tiktok(commands.Cog):
                     print(f'ERROR {e}')
 
             ydl.download(urls)
+
+
+    def parse_video_id(url):
+        video_id_patterns = [
+            (r'video', r'(?<=video/).+?(?=\D|$)'), 
+            (r'tiktok.com/v', r'(?<=/v/).+?(?=\D|$)')
+        ]
+
+        for pattern in video_id_patterns:
+            if pattern[0] in url:
+                video_id = re.search(pattern[1], url)
+                if video_id:
+                    return video_id.group(0)
+
+        # url = parse_full_link(url)
+
+        # for pattern in video_id_patterns:
+        #     if pattern[0] in url:
+        #         video_id = re.search(pattern[1], url)
+        #         if video_id:
+        #             return video_id.group(0)
+
+        return ""
+
+
+    # def parse_full_link(url):
+    #     TIMEOUT = 10
+    #     if 'video' in url or 'tiktok.com/v' in url:
+    #         return url
+
+    #     headers = {
+    #         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.64 Safari/537.36'}
+    #     try:
+    #         response = requests.head(url, timeout=TIMEOUT, headers=headers)
+    #         location = response.headers.get("location", url)
+    #         return location
+    #     except requests.RequestException as e:
+    #         return url
 
 
 def setup(client):
