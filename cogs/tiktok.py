@@ -142,7 +142,7 @@ class Tiktok(commands.Cog):
             ydl.download(urls)
 
 
-    def parse_video_id(url):
+    def parse_video_id(self, url):
         video_id_patterns = [
             (r'video', r'(?<=video/).+?(?=\D|$)'), 
             (r'tiktok.com/v', r'(?<=/v/).+?(?=\D|$)')
@@ -165,7 +165,7 @@ class Tiktok(commands.Cog):
         return ""
 
 
-    # def parse_full_link(url):
+    # def parse_full_link(self, url):
     #     TIMEOUT = 10
     #     if 'video' in url or 'tiktok.com/v' in url:
     #         return url
