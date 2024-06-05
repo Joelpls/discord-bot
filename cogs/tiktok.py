@@ -33,7 +33,7 @@ class Tiktok(commands.Cog):
                         tiktokurl = Utils.parse_full_link(match)
                         if 'video' not in tiktokurl and 'tiktok.com/v' not in tiktokurl:
                             continue
-                        tiktok_video_id = parse_video_id(tiktokurl)
+                        tiktok_video_id = self.parse_video_id(tiktokurl)
                         tikwm_url = f"https://www.tikwm.com/video/media/hdplay/{tiktok_video_id}.mp4"
                         await message.channel.send(tikwm_url)
                         # vids.append(tiktokurl)
