@@ -24,8 +24,9 @@ cluster = MongoClient(os.environ.get('MONGODB_ADDRESS'))
 db = cluster['Logs']
 
 client = commands.Bot(command_prefix=load_json('prefix'), case_insensitive=True)
+excluded_files = ['stocks.py']
 for filename in os.listdir('./cogs'):
-    if filename.endswith('.py'):
+    if filename.endswith('.py') and filename not in excluded_files:
         client.load_extension(f'cogs.{filename[:-3]}')
 
 
