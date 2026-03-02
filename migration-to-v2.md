@@ -32,6 +32,8 @@ These are being dropped entirely — do not migrate them:
 | `cogs/waitTimes.py` | |
 | `Slots.py` | Only used by `memeconomy.py` |
 
+Also update `Dockerfile` — remove `COPY Slots.py /` line (file no longer exists).
+
 ---
 
 ## Breaking Changes Required
@@ -73,6 +75,8 @@ class Bot(commands.Bot):
 client = Bot(command_prefix=load_json('prefix'), case_insensitive=True, intents=intents)
 ```
 
+**Note:** The APScheduler setup in `on_ready` can stay as-is, but `on_ready` can fire multiple times on reconnects. Consider moving the `scheduler.start()` and `scheduler.add_job(...)` calls into `setup_hook` instead so the scheduler is only initialized once.
+
 ---
 
 ### 3. Remaining cog files — `setup()` must be `async def` and `add_cog` must be awaited
@@ -95,13 +99,13 @@ Files to update:
 - `cogs/simpsons.py`
 - `cogs/tiktok.py`
 - `cogs/youtube.py`
-- `utils/tvshows.py`
+- `utils/tvshows.py` — **note**: `tvshows.py` has no `setup()` function. It's a base class imported by futurama.py and simpsons.py, not loaded as an extension. No change needed here.
 
 ---
 
 ### 4. `counting.py` — `.flatten()` is removed
 
-Same issue as the now-deleted `discover.py`. `channel.history().flatten()` must be replaced.
+`AsyncIterator.flatten()` no longer exists in discord.py 2.x. Replace with an async list comprehension.
 
 ```python
 # before
@@ -113,9 +117,47 @@ messages = [m async for m in channel.history(limit=3)]
 
 ---
 
-### 5. `dispander` — likely incompatible with discord.py 2.x
+### 5. `bot.py` — `datetime.datetime.utcnow()` is deprecated
 
-`randomStuff.py` calls `await dispand(message)` in `on_message`. `dispander` is itself a discord.py wrapper and was almost certainly written against v1.x. After upgrading, test whether it works. If it breaks, the `await dispand(message)` call in `randomStuff.py` should be removed (it expands Discord message links — the mobile link conversion below it can stay).
+`utcnow()` was deprecated in Python 3.12 and emits `DeprecationWarning` on Python 3.13. It returns a naive datetime which is error-prone. The `print_log` function in `bot.py` uses it.
+
+```python
+# before
+utc_time = datetime.datetime.utcnow()
+
+# after
+utc_time = datetime.datetime.now(datetime.timezone.utc)
+```
+
+---
+
+### 6. `Utils.py` — `ast.Num` and `visit_Num` are deprecated (removed in Python 3.14)
+
+The `Calc` class uses `visit_Num(self, node): return node.n`. In Python 3.12+, `ast.Num` is deprecated; in Python 3.14 it will be removed and `visit_Num` will never be called. On Python 3.13 this still works but emits a `DeprecationWarning`. The fix:
+
+```python
+# before
+def visit_Num(self, node):
+    return node.n
+
+# after
+def visit_Constant(self, node):
+    return node.value
+```
+
+This is not blocking for Python 3.13 but **will break on Python 3.14**. Worth fixing now.
+
+---
+
+### 7. ~~`dispander` — incompatible with discord.py 2.x~~ ✅ Done
+
+Removed `dispander` from `requirements.txt`, removed the import, the `await dispand(message)` call, the entire `on_message` listener (including the mobile link conversion), and the now-unused `import re` from `randomStuff.py`.
+
+---
+
+### 8. `tiktok.py` — remove dead `youtube_dl` import
+
+`tiktok.py` line 3 imports `youtube_dl` but never uses it (all actual downloading uses `yt_dlp`). Remove the import — `youtube-dl` is also being removed from `requirements.txt`.
 
 ---
 
@@ -131,22 +173,39 @@ These packages are no longer needed after the deletions:
 
 | Package | Reason |
 |---|---|
-| `youtube-dl` | Imported in `tiktok.py` but never actually called — `yt_dlp` is used instead. `youtube-dl` is also unmaintained. |
+| `youtube-dl` | Already removed from requirements.txt. Remove `import youtube_dl` from `tiktok.py`. |
 | `Pillow>=8.2.0` | Only used by `discover.py` (deleted) |
 | `numpy>=1.21.3` | Only used by `Slots.py` (deleted) |
 | `num2words==0.5.10` | Only used by `memeconomy.py` (deleted) |
-| `holidays==0.10.5.2` | Only used by the market hours functions in `Utils.py` (being deleted) |
+| `holidays==0.10.5.2` | Only used by the market hours functions in `Utils.py` (keeping Utils.py but these are dead code) |
 | `us~=2.0.1` | Only used by `waitTimes.py` (deleted) |
 | `fuzzywuzzy==0.18.0` | Only used by `waitTimes.py` (deleted) |
 | `python-Levenshtein==0.12.0` | Companion to fuzzywuzzy (deleted) |
+| ~~`dispander`~~ | ✅ Already removed |
+| `requests-cache>=1.2.0` | Not imported by any remaining cog — was likely used by deleted cogs |
+| `pandas` | Not imported by any remaining cog — verify before removing |
+| `urlexpander` | Imported in `tiktok.py` but never called (last updated 2021, inactive). Remove import from tiktok.py. |
+| `brotli` | HTTP decompression helper — not directly imported anywhere. May be an implicit dependency of `urlexpander` or `requests`. Remove if removing `urlexpander`. |
+
+### `compuglobal` compatibility
+
+`compuglobal` v0.2.7 (latest) depends only on `requests` and `aiohttp` — it has **no dependency on discord.py** so the v2 upgrade doesn't affect it. Its classifiers list Python 3.6–3.10 but it has no `python_requires` constraint and its dependencies are simple, so it will likely work on Python 3.13. Test `!futurama` and `!simpsons` after upgrading to verify.
+
+### `tvshows.py` — `self.bot.LOGGING` may crash
+
+`tvshows.py` line 24 references `self.bot.LOGGING` in the error handler for `APIPageStatusError`. If the bot object doesn't have a `LOGGING` attribute, this will raise `AttributeError` at runtime. Check whether this was set up somewhere in the deleted cogs or if it was always broken.
+
+### `pytz` is deprecated for new Python
+
+`pytz==2020.1` is used in `Utils.py`. Since Python 3.9, the standard library `zoneinfo` module replaces `pytz`. On Python 3.13, `pytz` still works but is considered legacy. Since you're keeping `Utils.py` as-is this isn't blocking, but it's worth knowing for future work.
 
 ### Add missing environment variables to README
 
 `memes.py` and `tiktok.py` both use `REDDIT_CLIENT_ID` and `REDDIT_CLIENT_SECRET` but these aren't documented in the README alongside the other required env vars.
 
-### Python version inconsistency
+### Python version inconsistency — FIXED
 
-`runtime.txt` specifies Python 3.9.4 but `Dockerfile` uses `python:3.8.4`. Both are EOL. Worth aligning them and upgrading to 3.11 or 3.12.
+`runtime.txt` and `Dockerfile` have already been updated to Python 3.13.
 
 ---
 
@@ -160,11 +219,20 @@ These packages are no longer needed after the deletions:
 
 ## Order of Operations
 
-1. Delete the files listed above
-2. Update `requirements.txt` (remove unused packages per recommendations above)
-3. Update `bot.py` (intents + `setup_hook`, remove `excluded_files`, clean up error handler)
-4. Update `setup()` in the 8 remaining cog files
-5. Fix `.flatten()` in `counting.py`
-6. Run the bot and check console output — each cog prints its own ready message so you can see what loaded
-7. Test `!futurama` and `!simpsons` — verify `compuglobal` works on Python 3.13
-8. Test `dispander` in `randomStuff.py` — if Discord message link expansion is broken, remove the `await dispand(message)` line
+1. Create a git branch for the migration
+2. Delete the cog files and `Slots.py` listed above
+3. Update `Dockerfile` (remove `COPY Slots.py /` line)
+4. Update `requirements.txt` (remove unused packages per recommendations above)
+5. Update `bot.py`:
+   - Pass `intents=intents` to `commands.Bot`
+   - Refactor to `Bot` subclass with `setup_hook` for extension loading
+   - Clean up dead `BadArgument` branches in error handler
+   - Replace `datetime.datetime.utcnow()` with `datetime.datetime.now(datetime.timezone.utc)`
+6. Update `setup()` in the 7 remaining cog files (not `tvshows.py` — it has no `setup()`)
+7. Fix `.flatten()` in `counting.py`
+8. Remove `dispander` import and `await dispand(message)` from `randomStuff.py`
+9. Remove `import youtube_dl` and `import urlexpander` from `tiktok.py`
+10. Fix `visit_Num` → `visit_Constant` in `Utils.py`
+11. Run the bot and check console output — each cog prints its own ready message so you can see what loaded
+12. Test `!futurama` and `!simpsons` — verify `compuglobal` works on Python 3.13
+13. Test `!calc` — verify the `visit_Constant` fix works

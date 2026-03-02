@@ -14,7 +14,6 @@ num2words==0.5.10
 compuglobal>=0.2.5
 pytz==2020.1
 holidays==0.10.5.2
-dispander
 yt_dlp>=2024.05.27
 APScheduler>=3.10.4,<4.0
 pandas

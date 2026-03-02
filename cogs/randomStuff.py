@@ -4,10 +4,7 @@ import discord
 import json
 from discord.ext import commands
 from pymongo import MongoClient
-import re
 import random
-from dispander import dispand
-
 import Utils
 
 
@@ -177,29 +174,6 @@ class RandomStuff(commands.Cog):
         else:
             message = f'_{user_name} pays respects to {respectee}_'
         await ctx.send(message)
-
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        """remove mobile links"""
-        if not message.author.bot:
-            await dispand(message)
-            '''
-            # Check to see if the user is Alex
-            if message.author.id == 224648266472620032:
-                # Check to see if he just posted some bullshit tiktok garbage
-                tik_tok_links = re.findall(pattern=r"tiktok\.com", string=message.content, flags=(re.M | re.I))
-                if tik_tok_links:
-                    await message.channel.send("Alex, Tik Tok is bad and you should feel bad. Stop posting Tik Tok links!")
-            '''
-            # Fina all 'm.' links and don't include the '?sfnsn' at the end
-            matches = re.findall(r'(?<=https://m\.(?!tiktok))\S*?(?=sfnsn|$)', message.content, re.MULTILINE)
-            matches = list(dict.fromkeys(matches))  # Remove duplicates
-            if len(matches) > 0:
-                mobile_links = ""
-                for match in matches:
-                    mobile_links += f'https://{match}\n'
-
-                await message.channel.send(mobile_links.strip())
 
     @commands.command(aliases=['greentext'])
     async def gt(self, ctx, *, text):
