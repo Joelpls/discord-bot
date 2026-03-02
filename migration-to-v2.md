@@ -167,25 +167,23 @@ Removed `dispander` from `requirements.txt`, removed the import, the `await disp
 
 `on_command_error` has specific `BadArgument` branches for `discover`, `pay`, `deposit`, and `slots` — all from deleted cogs. Those dead branches should be removed.
 
-### Clean up `requirements.txt`
+### Clean up `requirements.txt` ✅ Done
 
-These packages are no longer needed after the deletions:
-
-| Package | Reason |
+| Package | Status |
 |---|---|
-| `youtube-dl` | Already removed from requirements.txt. Remove `import youtube_dl` from `tiktok.py`. |
-| `Pillow>=8.2.0` | Only used by `discover.py` (deleted) |
-| `numpy>=1.21.3` | Only used by `Slots.py` (deleted) |
-| `num2words==0.5.10` | Only used by `memeconomy.py` (deleted) |
-| `holidays==0.10.5.2` | Only used by the market hours functions in `Utils.py` (keeping Utils.py but these are dead code) |
-| `us~=2.0.1` | Only used by `waitTimes.py` (deleted) |
-| `fuzzywuzzy==0.18.0` | Only used by `waitTimes.py` (deleted) |
-| `python-Levenshtein==0.12.0` | Companion to fuzzywuzzy (deleted) |
-| ~~`dispander`~~ | ✅ Already removed |
-| `requests-cache>=1.2.0` | Not imported by any remaining cog — was likely used by deleted cogs |
-| `pandas` | Not imported by any remaining cog — verify before removing |
-| `urlexpander` | Imported in `tiktok.py` but never called (last updated 2021, inactive). Remove import from tiktok.py. |
-| `brotli` | HTTP decompression helper — not directly imported anywhere. May be an implicit dependency of `urlexpander` or `requests`. Remove if removing `urlexpander`. |
+| ~~`youtube-dl`~~ | ✅ Removed |
+| `Pillow>=8.2.0` | ✅ Commented out (used by `discover.py`, re-enable when discover returns) |
+| ~~`numpy>=1.21.3`~~ | ✅ Removed (`Slots.py` deleted) |
+| ~~`num2words==0.5.10`~~ | ✅ Removed (`memeconomy.py` deleted) |
+| ~~`holidays==0.10.5.2`~~ | ✅ Removed |
+| ~~`us~=2.0.1`~~ | ✅ Removed (`waitTimes.py` deleted) |
+| ~~`fuzzywuzzy==0.18.0`~~ | ✅ Removed (`waitTimes.py` deleted) |
+| ~~`python-Levenshtein==0.12.0`~~ | ✅ Removed |
+| ~~`dispander`~~ | ✅ Removed |
+| ~~`requests-cache>=1.2.0`~~ | ✅ Removed |
+| ~~`pandas`~~ | ✅ Removed |
+| ~~`urlexpander`~~ | ✅ Removed (also remove `import urlexpander` from `tiktok.py`) |
+| ~~`brotli`~~ | ✅ Removed |
 
 ### `compuglobal` compatibility
 
