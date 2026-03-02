@@ -230,7 +230,7 @@ Removed `dispander` from `requirements.txt`, removed the import, the `await disp
    - Replace `datetime.datetime.utcnow()` with `datetime.datetime.now(datetime.timezone.utc)`
    - Remove unused `from itertools import cycle` import
 7. ✅ Update `setup()` in the 7 remaining cog files (not `tvshows.py` — it has no `setup()`)
-8. Fix `.flatten()` in `counting.py`
+8. ✅ Fix `.flatten()` in `counting.py`
 9. Remove `import youtube_dl` and `import urlexpander` from `tiktok.py`
 10. Fix `visit_Num` → `visit_Constant` in `Utils.py`
 11. Run the bot and check console output — each cog prints its own ready message so you can see what loaded

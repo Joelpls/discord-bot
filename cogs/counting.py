@@ -34,7 +34,7 @@ class Counting(commands.Cog):
             return
 
         try:
-            messages = await channel.history(limit=3).flatten()
+            messages = [m async for m in channel.history(limit=3)]
             # Get previous number
             previous_number_str = messages[1].content
             previous_num = int(previous_number_str)
