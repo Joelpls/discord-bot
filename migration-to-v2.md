@@ -32,13 +32,13 @@ These are being dropped entirely — do not migrate them:
 | `cogs/waitTimes.py` | ✅ Deleted |
 | `Slots.py` | ✅ Deleted |
 
-Also update `Dockerfile` — remove `COPY Slots.py /` line (file no longer exists).
+Also update `Dockerfile` — remove `COPY Slots.py /` line (file no longer exists). ✅ Done
 
 ---
 
 ## Breaking Changes Required
 
-### 1. `bot.py` — Bot initialization: pass `intents` explicitly (now required)
+### 1. `bot.py` — Bot initialization: pass `intents` explicitly (now required) ✅ Done
 
 `intents` is already created but never passed to `commands.Bot`. In v2 this is a hard requirement.
 
@@ -54,7 +54,7 @@ client = commands.Bot(command_prefix=load_json('prefix'), case_insensitive=True,
 
 ---
 
-### 2. `bot.py` — Cog/extension loading must move to `setup_hook`
+### 2. `bot.py` — Cog/extension loading must move to `setup_hook` ✅ Done
 
 `load_extension` is now async and must be awaited. The module-level `for` loop won't work. The correct v2 pattern is a `setup_hook` coroutine on the Bot class. Since the deleted cogs are gone from disk, the `excluded_files` list in `bot.py` can be removed entirely.
 
@@ -79,7 +79,7 @@ client = Bot(command_prefix=load_json('prefix'), case_insensitive=True, intents=
 
 ---
 
-### 3. Remaining cog files — `setup()` must be `async def` and `add_cog` must be awaited
+### 3. Remaining cog files — `setup()` must be `async def` and `add_cog` must be awaited ✅ Done
 
 ```python
 # before
@@ -103,7 +103,7 @@ Files to update:
 
 ---
 
-### 4. `counting.py` — `.flatten()` is removed
+### 4. `counting.py` — `.flatten()` is removed ✅ Done
 
 `AsyncIterator.flatten()` no longer exists in discord.py 2.x. Replace with an async list comprehension.
 
@@ -117,7 +117,7 @@ messages = [m async for m in channel.history(limit=3)]
 
 ---
 
-### 5. `bot.py` — `datetime.datetime.utcnow()` is deprecated
+### 5. `bot.py` — `datetime.datetime.utcnow()` is deprecated ✅ Done
 
 `utcnow()` was deprecated in Python 3.12 and emits `DeprecationWarning` on Python 3.13. It returns a naive datetime which is error-prone. The `print_log` function in `bot.py` uses it.
 
@@ -163,7 +163,7 @@ Removed `dispander` from `requirements.txt`, removed the import, the `await disp
 
 ## Additional Recommendations
 
-### Clean up `bot.py` error handler
+### Clean up `bot.py` error handler ✅ Done
 
 `on_command_error` has specific `BadArgument` branches for `discover`, `pay`, `deposit`, and `slots` — all from deleted cogs. Those dead branches should be removed.
 
