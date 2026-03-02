@@ -217,18 +217,18 @@ Removed `dispander` from `requirements.txt`, removed the import, the `await disp
 
 ## Order of Operations
 
-1. Create a git branch for the migration
-2. Delete the cog files and `Slots.py` listed above
-3. Update `Dockerfile` (remove `COPY Slots.py /` line)
-4. Update `requirements.txt` (remove unused packages per recommendations above)
-5. Update `bot.py`:
+1. ✅ Create a git branch for the migration
+2. ✅ Delete the cog files and `Slots.py` listed above
+3. ✅ Update `Dockerfile` (remove `COPY Slots.py /` line)
+4. ✅ Update `requirements.txt` (remove unused packages)
+5. ✅ Remove `dispander` and `on_message` listener from `randomStuff.py`
+6. Update `bot.py`:
    - Pass `intents=intents` to `commands.Bot`
    - Refactor to `Bot` subclass with `setup_hook` for extension loading
    - Clean up dead `BadArgument` branches in error handler
    - Replace `datetime.datetime.utcnow()` with `datetime.datetime.now(datetime.timezone.utc)`
-6. Update `setup()` in the 7 remaining cog files (not `tvshows.py` — it has no `setup()`)
-7. Fix `.flatten()` in `counting.py`
-8. Remove `dispander` import and `await dispand(message)` from `randomStuff.py`
+7. Update `setup()` in the 7 remaining cog files (not `tvshows.py` — it has no `setup()`)
+8. Fix `.flatten()` in `counting.py`
 9. Remove `import youtube_dl` and `import urlexpander` from `tiktok.py`
 10. Fix `visit_Num` → `visit_Constant` in `Utils.py`
 11. Run the bot and check console output — each cog prints its own ready message so you can see what loaded
