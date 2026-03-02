@@ -4,7 +4,6 @@ import json
 import os
 import datetime
 from discord.ext import commands, tasks
-from itertools import cycle
 from pymongo import MongoClient
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -23,11 +22,21 @@ scheduler = AsyncIOScheduler()
 cluster = MongoClient(os.environ.get('MONGODB_ADDRESS'))
 db = cluster['Logs']
 
-client = commands.Bot(command_prefix=load_json('prefix'), case_insensitive=True)
-excluded_files = ['stocks.py', 'discover.py']
-for filename in os.listdir('./cogs'):
-    if filename.endswith('.py') and filename not in excluded_files:
-        client.load_extension(f'cogs.{filename[:-3]}')
+
+class Bot(commands.Bot):
+    async def setup_hook(self):
+        excluded_files = ['discover.py']
+        for filename in os.listdir('./cogs'):
+            if filename.endswith('.py') and filename not in excluded_files:
+                await self.load_extension(f'cogs.{filename[:-3]}')
+
+        scheduler.start()
+        scheduler.add_job(send_free_game_message, CronTrigger(day_of_week='thu', hour=11, minute=3, jitter=180, timezone='US/Eastern'))
+        # Send daily during Christmas:
+        # scheduler.add_job(send_free_game_message, CronTrigger(hour=11, minute=3, jitter=180, timezone='US/Eastern'))
+
+
+client = Bot(command_prefix=load_json('prefix'), case_insensitive=True, intents=intents)
 
 
 async def send_free_game_message():
@@ -39,11 +48,6 @@ async def send_free_game_message():
 
 @client.event
 async def on_ready():
-    # change_status.start()
-    scheduler.start()
-    scheduler.add_job(send_free_game_message, CronTrigger(day_of_week='thu', hour=11, minute=3, jitter=180, timezone='US/Eastern'))
-    # Send daily during Christmas:
-    # scheduler.add_job(send_free_game_message, CronTrigger(hour=11, minute=3, jitter=180, timezone='US/Eastern'))
     print('Bot is ready')
 
 
@@ -58,15 +62,6 @@ async def on_command_error(ctx, error):
 
     if isinstance(error, commands.BadArgument):
         print_log('BadArgument error', ctx)
-        if ctx.command.qualified_name == 'discover':
-            return await ctx.send('Argument must be a digit.')
-        if ctx.command.qualified_name == 'pay':
-            return await ctx.send('Usage: !pay <amount> <@member>')
-        if ctx.command.qualified_name == 'deposit':
-            return await ctx.send('Usage: !deposit <amount> <@member>')
-        if ctx.command.qualified_name == 'slots':
-            return await ctx.send('Usage: !slots [bet]')
-
         return await ctx.send('Try again')
 
     print_log(str(error), ctx)
@@ -97,7 +92,7 @@ async def error_logs(ctx, num_logs=5):
 def print_log(error_name: str, ctx):
     collection = db[str(ctx.guild.id)]
     log_message = f"{error_name} - {ctx.message.author} : {ctx.message.content}"
-    utc_time = datetime.datetime.utcnow()
+    utc_time = datetime.datetime.now(datetime.timezone.utc)
 
     db_log_post = {'date': utc_time, 'error': error_name, 'user_name': str(ctx.message.author), 'message_content': ctx.message.content,
                    'user_id': ctx.author.id, 'channel': ctx.message.channel.id, 'message_id': ctx.message.id}

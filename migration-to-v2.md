@@ -222,11 +222,13 @@ Removed `dispander` from `requirements.txt`, removed the import, the `await disp
 3. ✅ Update `Dockerfile` (remove `COPY Slots.py /` line)
 4. ✅ Update `requirements.txt` (remove unused packages)
 5. ✅ Remove `dispander` and `on_message` listener from `randomStuff.py`
-6. Update `bot.py`:
+6. ✅ Update `bot.py`:
    - Pass `intents=intents` to `commands.Bot`
    - Refactor to `Bot` subclass with `setup_hook` for extension loading
+   - Move scheduler init from `on_ready` to `setup_hook` (avoids double-fire on reconnect)
    - Clean up dead `BadArgument` branches in error handler
    - Replace `datetime.datetime.utcnow()` with `datetime.datetime.now(datetime.timezone.utc)`
+   - Remove unused `from itertools import cycle` import
 7. Update `setup()` in the 7 remaining cog files (not `tvshows.py` — it has no `setup()`)
 8. Fix `.flatten()` in `counting.py`
 9. Remove `import youtube_dl` and `import urlexpander` from `tiktok.py`
