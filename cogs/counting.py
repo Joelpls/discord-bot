@@ -75,5 +75,5 @@ class Counting(commands.Cog):
             return
 
 
-def setup(client):
-    client.add_cog(Counting(client))
+async def setup(client):
+    await client.add_cog(Counting(client))

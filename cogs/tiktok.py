@@ -180,5 +180,5 @@ class Tiktok(commands.Cog):
     #         return url
 
 
-def setup(client):
-    client.add_cog(Tiktok(client))
+async def setup(client):
+    await client.add_cog(Tiktok(client))

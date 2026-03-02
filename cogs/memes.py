@@ -150,5 +150,5 @@ class Memes(commands.Cog):
                 return
 
 
-def setup(client):
-    client.add_cog(Memes(client))
+async def setup(client):
+    await client.add_cog(Memes(client))

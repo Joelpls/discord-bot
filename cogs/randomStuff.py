@@ -198,5 +198,5 @@ class RandomStuff(commands.Cog):
         await ctx.send(f"{ctx.message.author.display_name}:", file=discord.File("blinking_guy.gif"))
 
 
-def setup(client):
-    client.add_cog(RandomStuff(client))
+async def setup(client):
+    await client.add_cog(RandomStuff(client))
