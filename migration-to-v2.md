@@ -21,16 +21,16 @@ These are being dropped entirely — do not migrate them:
 
 | File | Notes |
 |---|---|
-| `cogs/covid.py` | |
+| `cogs/covid.py` | ✅ Deleted |
 | `cogs/discover.py` | **Kept but excluded from loading** — added to `excluded_files` in `bot.py`. Not a migration priority. A replacement will be built later. |
-| `cogs/food.py` | |
-| `cogs/memeconomy.py` | |
-| `cogs/polls.py` | |
-| `cogs/ranks.py` | |
-| `cogs/stocks.py` | Was already excluded from loading in `bot.py` |
-| `cogs/topMessages.py` | |
-| `cogs/waitTimes.py` | |
-| `Slots.py` | Only used by `memeconomy.py` |
+| `cogs/food.py` | ✅ Deleted |
+| `cogs/memeconomy.py` | ✅ Deleted |
+| `cogs/polls.py` | ✅ Deleted |
+| `cogs/ranks.py` | ✅ Deleted |
+| `cogs/stocks.py` | ✅ Deleted |
+| `cogs/topMessages.py` | ✅ Deleted |
+| `cogs/waitTimes.py` | ✅ Deleted |
+| `Slots.py` | ✅ Deleted |
 
 Also update `Dockerfile` — remove `COPY Slots.py /` line (file no longer exists).
 
