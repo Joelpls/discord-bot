@@ -22,7 +22,7 @@ These are being dropped entirely — do not migrate them:
 | File | Notes |
 |---|---|
 | `cogs/covid.py` | |
-| `cogs/discover.py` | |
+| `cogs/discover.py` | **Kept but excluded from loading** — added to `excluded_files` in `bot.py`. Not a migration priority. A replacement will be built later. |
 | `cogs/food.py` | |
 | `cogs/memeconomy.py` | |
 | `cogs/polls.py` | |
