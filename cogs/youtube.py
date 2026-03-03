@@ -2,16 +2,18 @@ import datetime
 import xml.etree.ElementTree as ET
 
 import aiohttp
+import discord
 from discord.ext import commands, tasks
 
 FEED_URL = 'https://www.youtube.com/feeds/videos.xml?channel_id=UCrTNhL_yO3tPTdQ5XgmmWjA'
 # THREAD_ID = 1170085014189379654
-THREAD_ID = 1478131003624263863
+THREAD_ID = 1478131003624263863 # test server
 POLL_MINUTES = 15
 
 NS = {
     'atom': 'http://www.w3.org/2005/Atom',
     'yt': 'http://www.youtube.com/xml/schemas/2015',
+    'media': 'http://search.yahoo.com/mrss/',
 }
 
 
@@ -57,6 +59,12 @@ class YouTube(commands.Cog):
             thread = self.client.get_channel(THREAD_ID)
             if thread:
                 await thread.send(link)
+                desc_el = entry.find('media:group/media:description', NS)
+                if desc_el is not None and desc_el.text:
+                    description = desc_el.text
+                    truncated = description[:300] + '...' if len(description) > 300 else description
+                    embed = discord.Embed(description=truncated, timestamp=published)
+                    await thread.send(embed=embed)
                 self.posted_ids.add(video_id)
 
     @poll_feed.before_loop
