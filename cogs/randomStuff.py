@@ -181,17 +181,6 @@ class RandomStuff(commands.Cog):
         await ctx.send(f'{text}')
         await ctx.message.delete()
 
-    @commands.command(aliases=['calculate', 'calc'])
-    async def calculator(self, ctx, *, text):
-        """Simple calculator. Add, Subtract, Multiply, Division, Powers"""
-        try:
-            result = Utils.Calc.evaluate(text)
-            await ctx.send(f'{text} = {result}')
-        except SyntaxError:
-            await ctx.send("Syntax Error")
-        except KeyError as k:
-            await ctx.send(f'Error: {str(k)}')
-
     @commands.command()
     async def blink(self, ctx):
         await ctx.message.delete()

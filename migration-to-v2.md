@@ -131,21 +131,11 @@ utc_time = datetime.datetime.now(datetime.timezone.utc)
 
 ---
 
-### 6. `Utils.py` — `ast.Num` and `visit_Num` are deprecated (removed in Python 3.14)
+### 6. `Utils.py` — `ast.Num` and `visit_Num` are deprecated (removed in Python 3.14) ✅ Done
 
-The `Calc` class uses `visit_Num(self, node): return node.n`. In Python 3.12+, `ast.Num` is deprecated; in Python 3.14 it will be removed and `visit_Num` will never be called. On Python 3.13 this still works but emits a `DeprecationWarning`. The fix:
+~~The `Calc` class uses `visit_Num(self, node): return node.n`. In Python 3.12+, `ast.Num` is deprecated; in Python 3.14 it will be removed and `visit_Num` will never be called. On Python 3.13 this still works but emits a `DeprecationWarning`.~~
 
-```python
-# before
-def visit_Num(self, node):
-    return node.n
-
-# after
-def visit_Constant(self, node):
-    return node.value
-```
-
-This is not blocking for Python 3.13 but **will break on Python 3.14**. Worth fixing now.
+Removed entirely: deleted the `Calc` class, `_OP_MAP`, and the `ast`/`operator` imports from `Utils.py`, and removed the `!calc`/`!calculate`/`!calculator` command from `randomStuff.py`.
 
 ---
 
@@ -232,7 +222,6 @@ Removed `dispander` from `requirements.txt`, removed the import, the `await disp
 7. ✅ Update `setup()` in the 7 remaining cog files (not `tvshows.py` — it has no `setup()`)
 8. ✅ Fix `.flatten()` in `counting.py`
 9. ✅ Remove `import youtube_dl` and `import urlexpander` from `tiktok.py`
-10. Fix `visit_Num` → `visit_Constant` in `Utils.py`
+10. ✅ Remove `!calc` command and `Calc` class entirely (`Utils.py` + `randomStuff.py`)
 11. Run the bot and check console output — each cog prints its own ready message so you can see what loaded
 12. Test `!futurama` and `!simpsons` — verify `compuglobal` works on Python 3.13
-13. Test `!calc` — verify the `visit_Constant` fix works
