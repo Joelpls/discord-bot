@@ -21,7 +21,7 @@ class TVShowCog(commands.Cog):
                 screencap = await self.api.search_for_screencap(search)
 
         except compuglobal.APIPageStatusError as error:
-            await self.bot.LOGGING.send(error)
+            print(f'TVShow APIPageStatusError: {error}')
             await ctx.send(error)
 
         except compuglobal.NoSearchResultsFound as error:

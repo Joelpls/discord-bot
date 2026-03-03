@@ -226,6 +226,6 @@ Removed `dispander` from `requirements.txt`, removed the import, the `await disp
 8. ✅ Fix `.flatten()` in `counting.py`
 9. ✅ Remove `import youtube_dl` and `import urlexpander` from `tiktok.py`
 10. ✅ Remove `!calc` command and `Calc` class entirely (`Utils.py` + `randomStuff.py`)
-11. Run the bot and check console output — each cog prints its own ready message so you can see what loaded
-12. Test `!futurama` and `!simpsons` — verify `compuglobal` works on Python 3.13
-13. Check `tvshows.py` — `self.bot.LOGGING` (line 24) is referenced in the `APIPageStatusError` handler. If the bot doesn't have a `LOGGING` attribute this will raise `AttributeError` at runtime. Determine if it's needed or just remove the logging call.
+11. ✅ Run the bot and check console output — each cog prints its own ready message so you can see what loaded
+12. ✅ Test `!futurama` and `!simpsons` — verify `compuglobal` works on Python 3.13
+13. ✅ Fix `tvshows.py` — replaced `self.bot.LOGGING.send(error)` with `print()` since the logging channel no longer exists.
