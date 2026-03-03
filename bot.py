@@ -25,7 +25,7 @@ db = cluster['Logs']
 
 class Bot(commands.Bot):
     async def setup_hook(self):
-        excluded_files = ['discover.py']
+        excluded_files = ['discover.py', 'memes.py']
         for filename in os.listdir('./cogs'):
             if filename.endswith('.py') and filename not in excluded_files:
                 await self.load_extension(f'cogs.{filename[:-3]}')

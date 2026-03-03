@@ -2,8 +2,6 @@ discord.py>=2.0.0
 dnspython>=2.6.0
 pymongo>=4.8.0
 requests>=2.25.0
-praw>=7.7.0
-prawcore>=2.0.0
 compuglobal>=0.2.5
 pytz==2020.1
 yt_dlp>=2024.05.27

@@ -23,6 +23,7 @@ These are being dropped entirely — do not migrate them:
 |---|---|
 | `cogs/covid.py` | ✅ Deleted |
 | `cogs/discover.py` | **Kept but excluded from loading** — added to `excluded_files` in `bot.py`. Not a migration priority. A replacement will be built later. |
+| `cogs/memes.py` | **Kept but excluded from loading** — Reddit (`praw`/`prawcore`) removed from the project. Excluded from `bot.py` until a replacement is built. |
 | `cogs/food.py` | ✅ Deleted |
 | `cogs/memeconomy.py` | ✅ Deleted |
 | `cogs/polls.py` | ✅ Deleted |
@@ -174,6 +175,8 @@ Removed `dispander` from `requirements.txt`, removed the import, the `await disp
 | ~~`pandas`~~ | ✅ Removed |
 | ~~`urlexpander`~~ | ✅ Removed (also remove `import urlexpander` from `tiktok.py`) |
 | ~~`brotli`~~ | ✅ Removed |
+| ~~`praw>=7.7.0`~~ | ✅ Removed (`memes.py` excluded, Reddit block removed from `tiktok.py`) |
+| ~~`prawcore>=2.0.0`~~ | ✅ Removed |
 
 ### `compuglobal` compatibility
 
@@ -225,3 +228,4 @@ Removed `dispander` from `requirements.txt`, removed the import, the `await disp
 10. ✅ Remove `!calc` command and `Calc` class entirely (`Utils.py` + `randomStuff.py`)
 11. Run the bot and check console output — each cog prints its own ready message so you can see what loaded
 12. Test `!futurama` and `!simpsons` — verify `compuglobal` works on Python 3.13
+13. Check `tvshows.py` — `self.bot.LOGGING` (line 24) is referenced in the `APIPageStatusError` handler. If the bot doesn't have a `LOGGING` attribute this will raise `AttributeError` at runtime. Determine if it's needed or just remove the logging call.
