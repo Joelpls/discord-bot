@@ -3,7 +3,7 @@ from discord import Intents
 import json
 import os
 import datetime
-from discord.ext import commands, tasks
+from discord.ext import commands
 from pymongo import MongoClient
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -19,7 +19,7 @@ def load_json(token):
 
 scheduler = AsyncIOScheduler()
 
-cluster = MongoClient(os.environ.get('MONGODB_ADDRESS'))
+cluster = MongoClient(os.environ.get('MONGODB_ADDRESS'), serverSelectionTimeoutMS=1000)
 db = cluster['Logs']
 
 

@@ -8,6 +8,7 @@ RUN pip install -r requirements.txt
 COPY bot.py /
 COPY Utils.py /
 COPY cogs /cogs
+COPY utils /utils
 
 CMD [ "python", "./bot.py" ]
 
