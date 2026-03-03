@@ -155,7 +155,7 @@ Removed `dispander` from `requirements.txt`, removed the import, the `await disp
 
 ---
 
-### 8. `tiktok.py` — remove dead `youtube_dl` import
+### 8. `tiktok.py` — remove dead `youtube_dl` import ✅ Done
 
 `tiktok.py` line 3 imports `youtube_dl` but never uses it (all actual downloading uses `yt_dlp`). Remove the import — `youtube-dl` is also being removed from `requirements.txt`.
 
@@ -231,7 +231,7 @@ Removed `dispander` from `requirements.txt`, removed the import, the `await disp
    - Remove unused `from itertools import cycle` import
 7. ✅ Update `setup()` in the 7 remaining cog files (not `tvshows.py` — it has no `setup()`)
 8. ✅ Fix `.flatten()` in `counting.py`
-9. Remove `import youtube_dl` and `import urlexpander` from `tiktok.py`
+9. ✅ Remove `import youtube_dl` and `import urlexpander` from `tiktok.py`
 10. Fix `visit_Num` → `visit_Constant` in `Utils.py`
 11. Run the bot and check console output — each cog prints its own ready message so you can see what loaded
 12. Test `!futurama` and `!simpsons` — verify `compuglobal` works on Python 3.13

@@ -1,13 +1,10 @@
 from discord.ext import commands
 import discord
-import youtube_dl
 import os
 import re
 import praw
-import asyncio
 import uuid
 import yt_dlp
-import urlexpander
 import Utils
 
 class Tiktok(commands.Cog):
