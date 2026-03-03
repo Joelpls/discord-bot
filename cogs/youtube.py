@@ -6,8 +6,8 @@ import discord
 from discord.ext import commands, tasks
 
 FEED_URL = 'https://www.youtube.com/feeds/videos.xml?channel_id=UCrTNhL_yO3tPTdQ5XgmmWjA'
-# THREAD_ID = 1170085014189379654
-THREAD_ID = 1478131003624263863 # test server
+THREAD_ID = 1170085014189379654
+# THREAD_ID = 1478131003624263863 # test server
 POLL_MINUTES = 15
 
 NS = {
