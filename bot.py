@@ -31,7 +31,7 @@ class Bot(commands.Bot):
                 await self.load_extension(f'cogs.{filename[:-3]}')
 
         scheduler.start()
-        scheduler.add_job(send_free_game_message, CronTrigger(day_of_week='thu', hour=11, minute=3, jitter=180, timezone='US/Eastern'))
+        scheduler.add_job(send_free_game_message, CronTrigger(day_of_week='thu', hour=11, minute=3, jitter=180, timezone='America/New_York'))
         # Send daily during Christmas:
         # scheduler.add_job(send_free_game_message, CronTrigger(hour=11, minute=3, jitter=180, timezone='US/Eastern'))
 
