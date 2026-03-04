@@ -1,5 +1,4 @@
 import datetime
-import json
 import os
 
 import discord
@@ -9,13 +8,9 @@ from pymongo import MongoClient
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
+import Utils
+
 intents = Intents.all()
-
-
-def load_json(token):
-    with open('./config.json') as f:
-        config = json.load(f)
-    return config.get(token)
 
 
 scheduler = AsyncIOScheduler()
@@ -37,7 +32,7 @@ class Bot(commands.Bot):
         # scheduler.add_job(send_free_game_message, CronTrigger(hour=11, minute=3, jitter=180, timezone='US/Eastern'))
 
 
-client = Bot(command_prefix=load_json('prefix'), case_insensitive=True, intents=intents)
+client = Bot(command_prefix=Utils.load_json('prefix'), case_insensitive=True, intents=intents)
 
 
 async def send_free_game_message():

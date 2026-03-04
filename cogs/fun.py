@@ -1,14 +1,9 @@
-import json
 import random
 
 import discord
 from discord.ext import commands
 
-
-def load_json(token):
-    with open('./config.json') as f:
-        config = json.load(f)
-    return config.get(token)
+import Utils
 
 
 class Fun(commands.Cog):
@@ -52,7 +47,7 @@ class Fun(commands.Cog):
     @commands.command(name='8ball', aliases=['8-Ball'])
     async def _8ball(self, ctx, *, question):
         """Ask the Magic 8-Ball a question!"""
-        responses = load_json('8ball_responses')
+        responses = Utils.load_json('8ball_responses')
         await ctx.send(f' {ctx.author.display_name}\'s question: {question}\nAnswer: {random.choice(responses)}')
 
     @commands.command(hidden=True)

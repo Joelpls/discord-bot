@@ -1,7 +1,16 @@
-import datetime, pytz, holidays
+import datetime
+import json
+
+import holidays
+import pytz
 import requests
 
 TIMEOUT = 5
+
+
+def load_json(token):
+    with open('./config.json', encoding='utf-8') as f:
+        return json.load(f).get(token)
 
 
 # Check if the stock market is open

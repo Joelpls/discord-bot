@@ -1,17 +1,13 @@
 import os
-import discord
-from discord.ext import commands
-from pymongo import MongoClient
-import json
-import praw
-import prawcore
 import random
 
+import discord
+import praw
+import prawcore
+from discord.ext import commands
+from pymongo import MongoClient
 
-def load_json(token):
-    with open('./config.json') as f:
-        config = json.load(f)
-    return config.get(token)
+import Utils
 
 
 reddit = praw.Reddit(client_id=os.environ.get('REDDIT_CLIENT_ID'),

@@ -37,7 +37,7 @@ docker run -e DISCORD_TOKEN=<token> -e MONGODB_ADDRESS=<address> -e IEX_PUB=<key
 
 **Shared utilities (`Utils.py`):** URL expansion helpers (`url_expander`, `parse_full_link`).
 
-**`config.json`** stores the command prefix (`!`) and 8-ball responses. It is read at runtime by multiple cogs using a local `load_json()` helper (duplicated in each cog — not imported from a shared module).
+**`config.json`** stores the command prefix (`!`) and 8-ball responses. It is read via `Utils.load_json()`, imported from `Utils.py`.
 
 **`utils/tvshows.py`** contains a utility for TV show lookups, loaded as a cog like the others.
 

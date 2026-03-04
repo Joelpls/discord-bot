@@ -1,20 +1,16 @@
-import os
-import discord
-import json
-from discord.ext import commands
-from pymongo import MongoClient
-import re
-from PIL import Image
 import copy
+import os
+import re
 import shutil
-import requests
 import uuid
 
+import discord
+import requests
+from discord.ext import commands
+from PIL import Image
+from pymongo import MongoClient
 
-def load_json(token):
-    with open('./config.json') as f:
-        config = json.load(f)
-    return config.get(token)
+import Utils
 
 
 cluster = MongoClient(os.environ.get('MONGODB_ADDRESS'))
