@@ -1,5 +1,20 @@
+import random
+
 import discord
 from discord.ext import commands
+
+FEATURE_REQUEST_INSULTS = [
+    'Add it yourself, bozo!',
+    'Oh wow, what a revolutionary idea. Did you come up with that all by yourself?',
+    'Cool idea. Too bad nobody asked.',
+    'Noted. Filed directly into the trash.',
+    'Incredible. Truly. I\'m in awe of your mediocrity.',
+    'That\'s a great idea for someone else\'s bot.',
+    'Have you considered not having opinions?',
+    'Bold of you to assume anyone will implement that.',
+    'Wow. Groundbreaking. Truly never been thought of before.',
+    'I\'ll get right on that, right after never.',
+]
 
 
 class Info(commands.Cog):
@@ -14,8 +29,8 @@ class Info(commands.Cog):
     @commands.command(name='featurerequest', aliases=['request', 'fr'])
     async def feature_request(self, ctx, *, text):
         """Request a new feature for the discord bot!"""
-        # TODO random insults
-        await ctx.send(f'Add it yourself, bozo! But if you insist... '
+        insult = random.choice(FEATURE_REQUEST_INSULTS)
+        await ctx.send(f'{insult} But if you insist... '
                        f'https://github.com/Joelpls/discord-bot/issues/new?assignees=&labels=&template=feature_request.md&title='
                        f'{text.replace(" ", "%20")}')
 
