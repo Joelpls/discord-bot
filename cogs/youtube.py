@@ -1,14 +1,21 @@
+import asyncio
 import datetime
+import os
+import re
 import xml.etree.ElementTree as ET
 
 import aiohttp
 import discord
 from discord.ext import commands, tasks
+from pymongo import MongoClient
 
-FEED_URL = 'https://www.youtube.com/feeds/videos.xml?channel_id=UCrTNhL_yO3tPTdQ5XgmmWjA'
-THREAD_ID = 1170085014189379654
-# THREAD_ID = 1478131003624263863 # test server
 POLL_MINUTES = 15
+ITEMS_PER_PAGE = 10
+
+BROWSER_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept-Language': 'en-US,en;q=0.9',
+}
 
 NS = {
     'atom': 'http://www.w3.org/2005/Atom',
@@ -16,12 +23,56 @@ NS = {
     'media': 'http://search.yahoo.com/mrss/',
 }
 
+cluster = MongoClient(os.environ.get('MONGODB_ADDRESS'), serverSelectionTimeoutMS=1000)
+yt_db = cluster['YouTube']
+subs_collection = yt_db['subscriptions']
+
+
+async def resolve_channel(session, url_or_handle):
+    """Resolve a YouTube URL or @handle to (channel_id, channel_name)."""
+    if not url_or_handle.startswith('http'):
+        handle = url_or_handle if url_or_handle.startswith('@') else f'@{url_or_handle}'
+        url = f'https://www.youtube.com/{handle}'
+    else:
+        url = url_or_handle
+
+    async with session.get(url, headers=BROWSER_HEADERS, timeout=aiohttp.ClientTimeout(total=15)) as resp:
+        resp.raise_for_status()
+        text = await resp.text()
+
+    channel_id_match = re.search(r'"externalId":"([^"]+)"', text)
+    if not channel_id_match:
+        raise ValueError(f'Could not find channel ID on page: {url}')
+    channel_id = channel_id_match.group(1)
+
+    name_match = re.search(r'"channelName":"([^"]+)"', text)
+    if name_match:
+        channel_name = name_match.group(1)
+    else:
+        title_match = re.search(r'<title>([^<]+)</title>', text)
+        channel_name = title_match.group(1).replace(' - YouTube', '').strip() if title_match else channel_id
+
+    return channel_id, channel_name
+
+
+async def get_latest_video_id(session, channel_id):
+    """Fetch the RSS feed and return the latest video_id, or None."""
+    feed_url = f'https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}'
+    async with session.get(feed_url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+        resp.raise_for_status()
+        text = await resp.text()
+    root = ET.fromstring(text)
+    entry = root.find('atom:entry', NS)
+    if entry is None:
+        return None
+    vid_el = entry.find('yt:videoId', NS)
+    return vid_el.text if vid_el is not None else None
+
 
 class YouTube(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-        self.posted_ids = set()
         self.poll_feed.start()
 
     def cog_unload(self):
@@ -31,45 +82,200 @@ class YouTube(commands.Cog):
     async def on_ready(self):
         print('YouTube cog ready')
 
+    # ── Poll loop ─────────────────────────────────────────────────────────────
+
     @tasks.loop(minutes=POLL_MINUTES)
     async def poll_feed(self):
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(FEED_URL, timeout=aiohttp.ClientTimeout(total=10)) as resp:
-                    resp.raise_for_status()
-                    text = await resp.text()
-        except Exception as e:
-            print(f'YouTube feed fetch failed: {e}')
+        subs = list(subs_collection.find({}))
+        if not subs:
             return
+
+        async with aiohttp.ClientSession() as session:
+            for sub in subs:
+                try:
+                    await self._check_sub(session, sub)
+                except Exception as e:
+                    print(f'YouTube poll error for {sub.get("youtube_channel_name")}: {e}')
+
+    async def _check_sub(self, session, sub):
+        feed_url = f'https://www.youtube.com/feeds/videos.xml?channel_id={sub["youtube_channel_id"]}'
+        async with session.get(feed_url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+            resp.raise_for_status()
+            text = await resp.text()
 
         root = ET.fromstring(text)
         entry = root.find('atom:entry', NS)
         if entry is None:
             return
 
-        video_id = entry.find('yt:videoId', NS).text
-        link = entry.find('atom:link', NS).get('href')
-        published_str = entry.find('atom:published', NS).text
+        vid_el = entry.find('yt:videoId', NS)
+        if vid_el is None:
+            return
+        video_id = vid_el.text
 
-        published = datetime.datetime.fromisoformat(published_str)
-        now = datetime.datetime.now(datetime.timezone.utc)
-        age_seconds = (now - published).total_seconds()
+        last_video_id = sub.get('last_video_id')
 
-        if age_seconds < POLL_MINUTES * 60 and video_id not in self.posted_ids:
-            thread = self.client.get_channel(THREAD_ID)
-            if thread:
-                await thread.send(link)
-                desc_el = entry.find('media:group/media:description', NS)
-                if desc_el is not None and desc_el.text:
-                    description = desc_el.text
-                    truncated = description[:300] + '...' if len(description) > 300 else description
-                    embed = discord.Embed(description=truncated, timestamp=published)
-                    await thread.send(embed=embed)
-                self.posted_ids.add(video_id)
+        if last_video_id is not None:
+            # Normal case: only post if it's a new video
+            if video_id == last_video_id:
+                return
+            should_post = True
+        else:
+            # Seed was missing (RSS was down at add time): use age check
+            published_el = entry.find('atom:published', NS)
+            if published_el is not None:
+                published = datetime.datetime.fromisoformat(published_el.text)
+                age_seconds = (datetime.datetime.now(datetime.timezone.utc) - published).total_seconds()
+                should_post = age_seconds < POLL_MINUTES * 60
+            else:
+                should_post = False
+
+        subs_collection.update_one(
+            {'_id': sub['_id']},
+            {'$set': {'last_video_id': video_id}}
+        )
+
+        if not should_post:
+            return
+
+        link_el = entry.find('atom:link', NS)
+        link = link_el.get('href') if link_el is not None else f'https://www.youtube.com/watch?v={video_id}'
+
+        discord_channel = self.client.get_channel(sub['discord_channel_id'])
+        if discord_channel is None:
+            return
+
+        await discord_channel.send(link)
+
+        desc_el = entry.find('media:group/media:description', NS)
+        if desc_el is not None and desc_el.text:
+            description = desc_el.text
+            truncated = description[:300] + '...' if len(description) > 300 else description
+            published_el = entry.find('atom:published', NS)
+            published = datetime.datetime.fromisoformat(published_el.text) if published_el is not None else discord.utils.utcnow()
+            embed = discord.Embed(description=truncated, timestamp=published)
+            await discord_channel.send(embed=embed)
 
     @poll_feed.before_loop
     async def before_poll(self):
         await self.client.wait_until_ready()
+
+    # ── Command group ─────────────────────────────────────────────────────────
+
+    @commands.group(name='youtube', invoke_without_command=True)
+    async def youtube_group(self, ctx):
+        await ctx.send('Usage: `!youtube add <url/@handle> [#channel]`, `!youtube remove <url/@handle>`, `!youtube list`')
+
+    @youtube_group.command(name='add')
+    async def youtube_add(self, ctx, url_or_handle: str, discord_channel: discord.TextChannel = None):
+        """Subscribe to a YouTube channel. Defaults to current channel/thread."""
+        target_channel = discord_channel or ctx.channel
+
+        async with ctx.typing():
+            async with aiohttp.ClientSession() as session:
+                try:
+                    channel_id, channel_name = await resolve_channel(session, url_or_handle)
+                except Exception as e:
+                    await ctx.send(f'Could not resolve YouTube channel: {e}')
+                    return
+
+                existing = subs_collection.find_one({
+                    'guild_id': ctx.guild.id,
+                    'youtube_channel_id': channel_id,
+                })
+                if existing:
+                    await ctx.send(f'Already subscribed to **{channel_name}** in <#{existing["discord_channel_id"]}>.')
+                    return
+
+                try:
+                    latest_video_id = await get_latest_video_id(session, channel_id)
+                except Exception as e:
+                    print(f'YouTube RSS fetch failed for {channel_id}: {e}')
+                    latest_video_id = None
+
+        subs_collection.insert_one({
+            'guild_id': ctx.guild.id,
+            'youtube_channel_id': channel_id,
+            'youtube_channel_name': channel_name,
+            'discord_channel_id': target_channel.id,
+            'last_video_id': latest_video_id,
+        })
+        await ctx.send(f'Subscribed to **{channel_name}** → <#{target_channel.id}>')
+
+    @youtube_group.command(name='remove')
+    async def youtube_remove(self, ctx, url_or_handle: str):
+        """Unsubscribe from a YouTube channel."""
+        async with ctx.typing():
+            async with aiohttp.ClientSession() as session:
+                try:
+                    channel_id, channel_name = await resolve_channel(session, url_or_handle)
+                except Exception as e:
+                    await ctx.send(f'Could not resolve YouTube channel: {e}')
+                    return
+
+        result = subs_collection.delete_one({
+            'guild_id': ctx.guild.id,
+            'youtube_channel_id': channel_id,
+        })
+        if result.deleted_count:
+            await ctx.send(f'Unsubscribed from **{channel_name}**.')
+        else:
+            await ctx.send(f'No subscription found for **{channel_name}** in this server.')
+
+    @youtube_group.command(name='list')
+    async def youtube_list(self, ctx):
+        """List all YouTube subscriptions for this server, paginated."""
+        subs = list(subs_collection.find({'guild_id': ctx.guild.id}))
+        if not subs:
+            await ctx.send('No YouTube subscriptions in this server.')
+            return
+
+        pages = [subs[i:i + ITEMS_PER_PAGE] for i in range(0, len(subs), ITEMS_PER_PAGE)]
+        page_index = 0
+
+        def make_embed(index):
+            page = pages[index]
+            embed = discord.Embed(title='YouTube Subscriptions', color=discord.Color.red())
+            lines = [f'**{sub["youtube_channel_name"]}** → <#{sub["discord_channel_id"]}>' for sub in page]
+            embed.description = '\n'.join(lines)
+            embed.set_footer(text=f'Page {index + 1}/{len(pages)}')
+            return embed
+
+        msg = await ctx.send(embed=make_embed(page_index))
+
+        if len(pages) == 1:
+            return
+
+        await msg.add_reaction('◀')
+        await msg.add_reaction('▶')
+
+        def check(reaction, user):
+            return (
+                user == ctx.author
+                and reaction.message.id == msg.id
+                and str(reaction.emoji) in ('◀', '▶')
+            )
+
+        while True:
+            try:
+                reaction, user = await self.client.wait_for('reaction_add', timeout=60.0, check=check)
+            except asyncio.TimeoutError:
+                try:
+                    await msg.clear_reactions()
+                except discord.Forbidden:
+                    pass
+                break
+
+            if str(reaction.emoji) == '▶' and page_index < len(pages) - 1:
+                page_index += 1
+            elif str(reaction.emoji) == '◀' and page_index > 0:
+                page_index -= 1
+
+            await msg.edit(embed=make_embed(page_index))
+            try:
+                await msg.remove_reaction(reaction, user)
+            except discord.Forbidden:
+                pass
 
 
 async def setup(client):
