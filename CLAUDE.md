@@ -49,3 +49,4 @@ docker run -e DISCORD_TOKEN=<token> -e MONGODB_ADDRESS=<address> -e IEX_PUB=<key
 
 ## Workflow Preferences
 - After making code changes, always suggest a commit message unprompted.
+- After making code changes, always check if any `.md` files (CLAUDE.md, testing.md, running-locally.md, file-reorganization.md) need updating to reflect the changes.

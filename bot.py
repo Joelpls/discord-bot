@@ -1,8 +1,9 @@
-import discord
-from discord import Intents
+import datetime
 import json
 import os
-import datetime
+
+import discord
+from discord import Intents
 from discord.ext import commands
 from pymongo import MongoClient
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -20,7 +21,7 @@ def load_json(token):
 scheduler = AsyncIOScheduler()
 
 cluster = MongoClient(os.environ.get('MONGODB_ADDRESS'), serverSelectionTimeoutMS=1000)
-db = cluster['Logs']
+logs_db = cluster['Logs']
 
 
 class Bot(commands.Bot):
@@ -67,30 +68,8 @@ async def on_command_error(ctx, error):
     print_log(str(error), ctx)
 
 
-@client.command(name='logs', aliases=['errors', 'errorlogs'])
-async def error_logs(ctx, num_logs=5):
-    """Print out the latest error log messages. Defaults to 5. Limit 25."""
-    collection = db[str(ctx.guild.id)]
-    if num_logs > 25:
-        num_logs = 25
-
-    # Get logs of mentioned user only
-    if len(ctx.message.mentions) > 0:
-        username = str(ctx.message.mentions[0])
-        logs = collection.find({'user_name': username}).limit(num_logs).sort('_id', -1)
-    else:
-        logs = collection.find({}).limit(num_logs).sort('_id', -1)
-
-    msg_list = []
-    for log in logs:
-        message = f'<{log.get("date")} UTC> {log.get("error")} - {log.get("user_name")} : {log.get("message_content")}'
-        msg_list.append(f'{message}\n')
-
-    await ctx.send(''.join(msg_list))
-
-
 def print_log(error_name: str, ctx):
-    collection = db[str(ctx.guild.id)]
+    collection = logs_db[str(ctx.guild.id)]
     log_message = f"{error_name} - {ctx.message.author} : {ctx.message.content}"
     utc_time = datetime.datetime.now(datetime.timezone.utc)
 
