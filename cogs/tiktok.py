@@ -33,7 +33,7 @@ class Tiktok(commands.Cog):
                         tikwm_url = f"https://www.tikwm.com/video/media/hdplay/{tiktok_video_id}.mp4"
                         await message.channel.send(tikwm_url)
                         # vids.append(tiktokurl)
-                    elif 'v.redd.it' in match or 'twitter.com' in match or 'x.com' in match:
+                    elif 'v.redd.it' in match or re.search(r'https?://(?:www\.)?(twitter\.com|x\.com)/', match):
                         vids.append(match)
                 if len(vids) > 0:
                     file_names = []
@@ -41,7 +41,12 @@ class Tiktok(commands.Cog):
 
                     # msgs = []
                     # msg = None
+                    VIDEO_EXTENSIONS = {'.mp4', '.mov', '.webm', '.mkv', '.avi', '.gif'}
                     for file_name in file_names:
+                        if not any(file_name.lower().endswith(ext) for ext in VIDEO_EXTENSIONS):
+                            if os.path.isfile(file_name):
+                                os.remove(file_name)
+                            continue
                         try:
                             msg = await message.channel.send(file=discord.File(file_name))
                             # msgs.append(msg)
@@ -108,8 +113,8 @@ class Tiktok(commands.Cog):
         }
 
         # tiktok_urls = [x for x in urls if 'tiktok.com' in x]
-        twitter_and_x_urls = [x for x in urls if 'twitter.com' in x or 'x.com' in x]
-        not_tiktoks = [x for x in urls if 'tiktok.com' not in x and 'twitter.com' not in x and 'x.com' not in x]
+        twitter_and_x_urls = [x for x in urls if re.search(r'https?://(?:www\.)?(twitter\.com|x\.com)/', x)]
+        not_tiktoks = [x for x in urls if 'tiktok.com' not in x and not re.search(r'https?://(?:www\.)?(twitter\.com|x\.com)/', x)]
 
         # self.yt_downloader(file_names, tiktok_urls, ydl_opts)
         self.yt_downloader(file_names, twitter_and_x_urls, ydl_opts_twitter_x)
