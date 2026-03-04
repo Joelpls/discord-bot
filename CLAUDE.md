@@ -32,16 +32,10 @@ docker run -e DISCORD_TOKEN=<token> -e MONGODB_ADDRESS=<address> -e IEX_PUB=<key
 **MongoDB databases in use:**
 - `Discord` — Image URLs for the `!discover`/`!pick` system (keyed by guild ID)
 - `Discover_Images` — Temporary state for `!pick` reaction flow (keyed by guild ID)
-- `Economy` — Meme bucks balances (`memeconomy.py`)
-- `Ranks` — XP and level data (`ranks.py`)
-- `Reactions` — Reaction given/received counts (`randomStuff.py`)
+- `YouTube` — YouTube channel subscriptions (`youtube.py`)
 - `Logs` — Command error logs (in `bot.py`)
 
-**Shared utilities (`Utils.py`):** `Calc` (AST-based expression evaluator), `Reel` (slot machine symbols enum), stock market hours helpers (`is_market_closed`, `pre_market_closed`, `post_market_closed`), and URL expansion helpers.
-
-**Slots logic (`Slots.py` + `Utils.py`):** `SlotMachine` class in `Slots.py` uses the `Reel` enum from `Utils.py`. `memeconomy.py` imports both to run the `!slots` command.
-
-**`stocks.py` is excluded from auto-loading** (hardcoded in `bot.py`'s `excluded_files` list). To re-enable it, remove `'stocks.py'` from that list. It uses Yahoo Finance's unofficial API and polls live price updates every 5 seconds while the market is open.
+**Shared utilities (`Utils.py`):** URL expansion helpers (`url_expander`, `parse_full_link`).
 
 **`config.json`** stores the command prefix (`!`) and 8-ball responses. It is read at runtime by multiple cogs using a local `load_json()` helper (duplicated in each cog — not imported from a shared module).
 
@@ -51,4 +45,7 @@ docker run -e DISCORD_TOKEN=<token> -e MONGODB_ADDRESS=<address> -e IEX_PUB=<key
 
 - All collections are namespaced by `str(ctx.guild.id)` or `str(message.guild.id)`, making the bot multi-server safe.
 - The `!pick` command downloads images locally to `./cogs/images/` (created on demand), combines them with Pillow, sends the combo image, then deletes the local files.
-- `discord.py` version is pinned at `1.5.1` — this is an older API version. Use `client.load_extension()`, `commands.Cog`, and `ctx.history().flatten()` (not the newer async iterator pattern).
+- `discord.py` version is `2.x`. Use `await client.add_cog()`, `async def setup_hook()`, and async iterators for history.
+
+## Workflow Preferences
+- After making code changes, always suggest a commit message unprompted.
