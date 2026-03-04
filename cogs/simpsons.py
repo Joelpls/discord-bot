@@ -17,6 +17,7 @@ class Simpsons(TVShowCog):
     @commands.cooldown(1, 3, BucketType.channel)
     @commands.guild_only()
     async def simpsons(self, ctx, *, search_terms: str = None):
+        """Random Simpsons quote gif, or search with !simpsons <terms>"""
         await self.post_gif(ctx, search_terms)
 
 

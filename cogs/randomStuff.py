@@ -159,6 +159,7 @@ class RandomStuff(commands.Cog):
 
     @commands.command(aliases=['em', 'me'])
     async def emote(self, ctx, *, text):
+        """Post an action as your name, e.g. !emote waves hello"""
         await ctx.message.delete()
         user_name = ctx.author.display_name
         message = f'_{user_name} {text}_'
@@ -177,12 +178,14 @@ class RandomStuff(commands.Cog):
 
     @commands.command(aliases=['greentext'])
     async def gt(self, ctx, *, text):
+        """Post a greentext message"""
         text = f"```css\n{ctx.message.author.display_name}: >{text}\n```"
         await ctx.send(f'{text}')
         await ctx.message.delete()
 
     @commands.command()
     async def blink(self, ctx):
+        """Post the blinking guy gif"""
         await ctx.message.delete()
         await ctx.send(f"{ctx.message.author.display_name}:", file=discord.File("blinking_guy.gif"))
 
