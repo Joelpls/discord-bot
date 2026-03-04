@@ -151,6 +151,15 @@ class RandomStuff(commands.Cog):
                        f'https://github.com/Joelpls/discord-bot/issues/new?assignees=&labels=&template=feature_request.md&title='
                        f'{text.replace(" ", "%20")}')
 
+    @commands.command()
+    async def features(self, ctx):
+        """Show a list of automatic bot features"""
+        embed = discord.Embed(title='Automatic Features', color=discord.Color.blurple())
+        embed.add_field(name='Counting', value='Enforces sequential counting in any channel named "counting". Deletes invalid messages and DMs the correct next number.', inline=False)
+        embed.add_field(name='TikTok & Twitter/X', value='Automatically reposts TikTok and Twitter/X video links as a direct playable video.', inline=False)
+        embed.add_field(name='YouTube Notifications', value='Posts new videos from subscribed YouTube channels to a designated channel or thread. Manage subscriptions with `!youtube`.', inline=False)
+        await ctx.send(embed=embed)
+
     @commands.command(name='freegames', aliases=['freegame'])
     async def free_games(self, ctx):
         """Show this week's free games from the Epic Store"""

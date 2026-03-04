@@ -164,6 +164,7 @@ class YouTube(commands.Cog):
 
     @commands.group(name='youtube', invoke_without_command=True)
     async def youtube_group(self, ctx):
+        """Manage YouTube subscriptions. Subcommands: add, remove, list"""
         await ctx.send('Usage: `!youtube add <url/@handle> [#channel]`, `!youtube remove <url/@handle>`, `!youtube list`')
 
     @youtube_group.command(name='add')
