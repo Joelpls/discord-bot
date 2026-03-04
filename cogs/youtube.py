@@ -1,4 +1,3 @@
-import asyncio
 import datetime
 import os
 import re
@@ -67,6 +66,44 @@ async def get_latest_video_id(session, channel_id):
         return None
     vid_el = entry.find('yt:videoId', NS)
     return vid_el.text if vid_el is not None else None
+
+
+class SubsPaginator(discord.ui.View):
+
+    def __init__(self, pages, make_embed, author):
+        super().__init__(timeout=60)
+        self.pages = pages
+        self.make_embed = make_embed
+        self.author = author
+        self.index = 0
+        self._update_buttons()
+
+    def _update_buttons(self):
+        self.prev_button.disabled = self.index == 0
+        self.next_button.disabled = self.index == len(self.pages) - 1
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user != self.author:
+            await interaction.response.send_message('This is not your list.', ephemeral=True)
+            return False
+        return True
+
+    async def on_timeout(self):
+        for item in self.children:
+            item.disabled = True
+        await self.message.edit(view=self)
+
+    @discord.ui.button(label='◀', style=discord.ButtonStyle.secondary)
+    async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.index -= 1
+        self._update_buttons()
+        await interaction.response.edit_message(embed=self.make_embed(self.index), view=self)
+
+    @discord.ui.button(label='▶', style=discord.ButtonStyle.secondary)
+    async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.index += 1
+        self._update_buttons()
+        await interaction.response.edit_message(embed=self.make_embed(self.index), view=self)
 
 
 class YouTube(commands.Cog):
@@ -232,7 +269,6 @@ class YouTube(commands.Cog):
             return
 
         pages = [subs[i:i + ITEMS_PER_PAGE] for i in range(0, len(subs), ITEMS_PER_PAGE)]
-        page_index = 0
 
         def make_embed(index):
             page = pages[index]
@@ -242,41 +278,12 @@ class YouTube(commands.Cog):
             embed.set_footer(text=f'Page {index + 1}/{len(pages)}')
             return embed
 
-        msg = await ctx.send(embed=make_embed(page_index))
-
         if len(pages) == 1:
+            await ctx.send(embed=make_embed(0))
             return
 
-        await msg.add_reaction('◀')
-        await msg.add_reaction('▶')
-
-        def check(reaction, user):
-            return (
-                user == ctx.author
-                and reaction.message.id == msg.id
-                and str(reaction.emoji) in ('◀', '▶')
-            )
-
-        while True:
-            try:
-                reaction, user = await self.client.wait_for('reaction_add', timeout=60.0, check=check)
-            except asyncio.TimeoutError:
-                try:
-                    await msg.clear_reactions()
-                except discord.Forbidden:
-                    pass
-                break
-
-            if str(reaction.emoji) == '▶' and page_index < len(pages) - 1:
-                page_index += 1
-            elif str(reaction.emoji) == '◀' and page_index > 0:
-                page_index -= 1
-
-            await msg.edit(embed=make_embed(page_index))
-            try:
-                await msg.remove_reaction(reaction, user)
-            except discord.Forbidden:
-                pass
+        view = SubsPaginator(pages, make_embed, ctx.author)
+        view.message = await ctx.send(embed=make_embed(0), view=view)
 
 
 async def setup(client):

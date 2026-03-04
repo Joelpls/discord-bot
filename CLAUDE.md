@@ -35,7 +35,7 @@ docker run -e DISCORD_TOKEN=<token> -e MONGODB_ADDRESS=<address> -e IEX_PUB=<key
 - `YouTube` — YouTube channel subscriptions (`youtube.py`)
 - `Logs` — Command error logs (in `bot.py`)
 
-**Shared utilities (`Utils.py`):** URL expansion helpers (`url_expander`, `parse_full_link`).
+**Shared utilities (`Utils.py`):** `load_json()` for reading `config.json`, URL expansion helpers (`url_expander`, `parse_full_link`), and stock market hours helpers (`is_market_closed`, `pre_market_closed`, `post_market_closed`) kept for future use.
 
 **`config.json`** stores the command prefix (`!`) and 8-ball responses. It is read via `Utils.load_json()`, imported from `Utils.py`.
 

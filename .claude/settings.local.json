@@ -4,7 +4,9 @@
       "mcp__context7__query-docs",
       "WebSearch",
       "WebFetch(domain:pypi.org)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:discordpy.readthedocs.io)",
+      "WebFetch(domain:docs.pycord.dev)"
     ]
   }
 }
