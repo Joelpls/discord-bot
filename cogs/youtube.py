@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 
 import aiohttp
 import discord
+from discord import app_commands
 from discord.ext import commands, tasks
 from pymongo import MongoClient
 
@@ -199,7 +200,7 @@ class YouTube(commands.Cog):
 
     # ── Command group ─────────────────────────────────────────────────────────
 
-    @commands.group(name='youtube', invoke_without_command=True)
+    @commands.hybrid_group(name='youtube', invoke_without_command=True)
     async def youtube_group(self, ctx):
         """Manage YouTube subscriptions. Subcommands: add, remove, list"""
         await ctx.send('Usage: `!youtube add <url/@handle> [#channel]`, `!youtube remove <url/@handle>`, `!youtube list`')
@@ -241,15 +242,25 @@ class YouTube(commands.Cog):
         await ctx.send(f'Subscribed to **{channel_name}** → <#{target_channel.id}>')
 
     @youtube_group.command(name='remove')
+    @app_commands.describe(url_or_handle='YouTube channel URL, @handle, or pick from the list')
     async def youtube_remove(self, ctx, url_or_handle: str):
         """Unsubscribe from a YouTube channel."""
-        async with ctx.typing():
-            async with aiohttp.ClientSession() as session:
-                try:
-                    channel_id, channel_name = await resolve_channel(session, url_or_handle)
-                except Exception as e:
-                    await ctx.send(f'Could not resolve YouTube channel: {e}')
-                    return
+        # If the value is already a channel ID (selected via autocomplete), skip resolve
+        existing = subs_collection.find_one({
+            'guild_id': ctx.guild.id,
+            'youtube_channel_id': url_or_handle,
+        })
+        if existing:
+            channel_id = existing['youtube_channel_id']
+            channel_name = existing['youtube_channel_name']
+        else:
+            async with ctx.typing():
+                async with aiohttp.ClientSession() as session:
+                    try:
+                        channel_id, channel_name = await resolve_channel(session, url_or_handle)
+                    except Exception as e:
+                        await ctx.send(f'Could not resolve YouTube channel: {e}')
+                        return
 
         result = subs_collection.delete_one({
             'guild_id': ctx.guild.id,
@@ -259,6 +270,15 @@ class YouTube(commands.Cog):
             await ctx.send(f'Unsubscribed from **{channel_name}**.')
         else:
             await ctx.send(f'No subscription found for **{channel_name}** in this server.')
+
+    @youtube_remove.autocomplete('url_or_handle')
+    async def remove_autocomplete(self, interaction: discord.Interaction, current: str):
+        subs = list(subs_collection.find({'guild_id': interaction.guild_id}))
+        return [
+            app_commands.Choice(name=sub['youtube_channel_name'], value=sub['youtube_channel_id'])
+            for sub in subs
+            if current.lower() in sub['youtube_channel_name'].lower()
+        ][:25]
 
     @youtube_group.command(name='list')
     async def youtube_list(self, ctx):

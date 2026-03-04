@@ -26,6 +26,8 @@ class Bot(commands.Bot):
             if filename.endswith('.py') and filename not in excluded_files:
                 await self.load_extension(f'cogs.{filename[:-3]}')
 
+        await self.tree.sync()
+
         scheduler.start()
         scheduler.add_job(send_free_game_message, CronTrigger(day_of_week='thu', hour=11, minute=3, jitter=180, timezone='America/New_York'))
         # Send daily during Christmas:
