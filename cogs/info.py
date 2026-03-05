@@ -109,11 +109,11 @@ class Info(commands.Cog):
                 current, upcoming = await fetch_free_games()
             except Exception as e:
                 print(f'Epic Games API error: {e}')
-                await ctx.send('https://www.epicgames.com/store/en-US/free-games')
+                await ctx.send('<https://www.epicgames.com/store/en-US/free-games>')
                 return
 
         if not current and not upcoming:
-            await ctx.send('https://www.epicgames.com/store/en-US/free-games')
+            await ctx.send('<https://www.epicgames.com/store/en-US/free-games>')
             return
 
         for game in current:
@@ -134,6 +134,8 @@ class Info(commands.Cog):
             embed = discord.Embed(title=label, color=discord.Color.greyple(), description='Coming soon')
             embed.set_footer(text='Upcoming free game')
             await ctx.send(embed=embed)
+
+        await ctx.send('<https://www.epicgames.com/store/en-US/free-games>')
 
 
 async def setup(client):

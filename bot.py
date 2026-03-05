@@ -38,10 +38,36 @@ client = Bot(command_prefix=Utils.load_json('prefix'), case_insensitive=True, in
 
 
 async def send_free_game_message():
+    from cogs.info import fetch_free_games
     channels = [751131240203026566, 688900848956342324]  # TODO get channel names from database
+
+    try:
+        current, upcoming = await fetch_free_games()
+    except Exception as e:
+        print(f'Epic Games scheduled fetch failed: {e}')
+        for ch in channels:
+            channel = client.get_channel(ch)
+            if channel:
+                await channel.send('<https://www.epicgames.com/store/en-US/free-games>')
+        return
+
     for ch in channels:
         channel = client.get_channel(ch)
-        await channel.send('https://www.epicgames.com/store/en-US/free-games')
+        if not channel:
+            continue
+        if not current:
+            await channel.send('<https://www.epicgames.com/store/en-US/free-games>')
+            continue
+        for game in current:
+            title = game['title']
+            price = game['original_price']
+            label = f'**{title}** (~~{price}~~ Free)' if price and price != '0' else f'**{title}** (Free)'
+            embed = discord.Embed(title=label, url=game['store_url'], color=discord.Color.green())
+            if game.get('image_url'):
+                embed.set_image(url=game['image_url'])
+            embed.set_footer(text='Free now on Epic Games Store')
+            await channel.send(embed=embed)
+        await channel.send('<https://www.epicgames.com/store/en-US/free-games>')
 
 
 @client.event
