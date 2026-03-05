@@ -297,8 +297,14 @@ class YouTube(commands.Cog):
         def make_embed(index):
             page = pages[index]
             embed = discord.Embed(title='YouTube Subscriptions', color=discord.Color.red())
-            lines = [f'**{sub["youtube_channel_name"]}** → <#{sub["discord_channel_id"]}>' for sub in page]
-            embed.description = '\n'.join(lines)
+            lines = []
+            for sub in page:
+                line = f'**{sub["youtube_channel_name"]}** → <#{sub["discord_channel_id"]}>'
+                last = sub.get('last_video_id')
+                if last:
+                    line += f'\n↳ https://www.youtube.com/watch?v={last}'
+                lines.append(line)
+            embed.description = '\n\n'.join(lines)
             embed.set_footer(text=f'Page {index + 1}/{len(pages)}')
             return embed
 
