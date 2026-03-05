@@ -206,7 +206,7 @@ class YouTube(commands.Cog):
         await ctx.send('Usage: `!youtube add <url/@handle> [#channel]`, `!youtube remove <url/@handle>`, `!youtube list`')
 
     @youtube_group.command(name='add')
-    async def youtube_add(self, ctx, url_or_handle: str, discord_channel: discord.TextChannel = None):
+    async def youtube_add(self, ctx, url_or_handle: str, discord_channel: discord.TextChannel | discord.Thread = None):
         """Subscribe to a YouTube channel. Defaults to current channel/thread."""
         target_channel = discord_channel or ctx.channel
 
