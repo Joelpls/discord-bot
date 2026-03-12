@@ -140,22 +140,29 @@ def get_yahoo_quote(ticker: str, info) -> discord.Embed:
     else:
         after_market = ''
 
+    week52_high = info.get('fiftyTwoWeekHigh')
+    week52_low = info.get('fiftyTwoWeekLow')
+
     return stock_embed(change_string, color, company_name, high, latest_price, low, market_percent_string, prev, q_time, symbol,
-                       after_market)
+                       after_market, week52_high, week52_low)
 
 
 def stock_embed(change_string, color, company_name, high, latest_price, low, market_percent_string, prev, q_time, symbol,
-                after_market):
+                after_market, week52_high=None, week52_low=None):
     desc1 = ''.join([str('${:,.2f}'.format(float(latest_price))), " ", change_string, market_percent_string])
     if high is not None and low is not None:
         desc2 = ''.join(['High: ', '{:,.2f}'.format(float(high)), ' Low: ', '{:,.2f}'.format(float(low)), ' Prev: ',
                          '{:,.2f}'.format(float(prev))])
     else:
         desc2 = ''.join(['Prev: ', '{:,.2f}'.format(float(prev))])
+    if week52_high is not None and week52_low is not None:
+        desc3 = f'52wk High: {week52_high:,.2f}  52wk Low: {week52_low:,.2f}'
+    else:
+        desc3 = ''
     embed = discord.Embed(
         title="".join([company_name, " ($", symbol, ")"]),
         url="https://finance.yahoo.com/quote/" + symbol,
-        description=''.join([desc1, '\n', desc2, '\n', after_market]),
+        description='\n'.join(filter(None, [desc1, desc2, desc3, after_market])),
         color=color
     )
     embed.set_footer(text=f'{q_time}')
