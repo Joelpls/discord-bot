@@ -55,6 +55,16 @@ async def resolve_channel(session, url_or_handle):
     return channel_id, channel_name
 
 
+async def is_short(session, video_id):
+    """Return True if the video is a YouTube Short, False otherwise. Fails open."""
+    try:
+        url = f'https://www.youtube.com/shorts/{video_id}'
+        async with session.head(url, headers=BROWSER_HEADERS, allow_redirects=True, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+            return '/shorts/' in str(resp.url)
+    except Exception:
+        return False
+
+
 async def get_latest_video_id(session, channel_id):
     """Fetch the RSS feed and return the latest video_id, or None."""
     feed_url = f'https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}'
@@ -176,6 +186,9 @@ class YouTube(commands.Cog):
         if not should_post:
             return
 
+        if await is_short(session, video_id):
+            return
+
         link_el = entry.find('atom:link', NS)
         link = link_el.get('href') if link_el is not None else f'https://www.youtube.com/watch?v={video_id}'
 
@@ -203,7 +216,7 @@ class YouTube(commands.Cog):
     @commands.hybrid_group(name='youtube', invoke_without_command=True)
     async def youtube_group(self, ctx):
         """Manage YouTube subscriptions. Subcommands: add, remove, list"""
-        await ctx.send('Usage: `!youtube add <url/@handle> [#channel]`, `!youtube remove <url/@handle>`, `!youtube list`')
+        await ctx.send('Usage: `!youtube add <url/@handle> [#channel]`, `!youtube remove <url/@handle>`, `!youtube list`\nNote: Shorts are never posted.')
 
     @youtube_group.command(name='add')
     @app_commands.describe(
