@@ -1,4 +1,5 @@
 discord.py>=2.0.0
+yfinance>=0.2.36
 dnspython>=2.6.0
 pymongo>=4.8.0
 requests>=2.25.0

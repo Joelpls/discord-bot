@@ -10,7 +10,9 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:epergo.com)",
       "WebFetch(domain:epicstore-api.readthedocs.io)",
-      "WebFetch(domain:store-site-backend-static.ak.epicgames.com)"
+      "WebFetch(domain:store-site-backend-static.ak.epicgames.com)",
+      "WebFetch(domain:scrapfly.io)",
+      "mcp__context7__resolve-library-id"
     ]
   }
 }
