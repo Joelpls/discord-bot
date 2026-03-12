@@ -108,6 +108,32 @@ async def update_quote(msg, ticker, length):
         return
 
 
+def format_large_number(n, prefix=''):
+    if n >= 1_000_000_000_000:
+        return f'{prefix}{n / 1_000_000_000_000:,.2f}T'
+    elif n >= 1_000_000_000:
+        return f'{prefix}{n / 1_000_000_000:,.2f}B'
+    elif n >= 1_000_000:
+        return f'{prefix}{n / 1_000_000:,.2f}M'
+    return f'{prefix}{n:,.0f}'
+
+
+def get_market_status_footer(quote_time):
+    tz = pytz.timezone('America/New_York')
+    now = datetime.now(tz)
+    time_str = now.strftime('%H:%M ET')
+
+    if not Utils.is_market_closed():
+        return f'Market Open · {time_str}'
+    elif not Utils.pre_market_closed():
+        return f'Pre-Market · {time_str}'
+    elif not Utils.post_market_closed():
+        return f'After Hours · {time_str}'
+    else:
+        q_time_str = datetime.fromtimestamp(quote_time, tz=tz).strftime('%H:%M ET') if quote_time else time_str
+        return f'Market Closed · {q_time_str}'
+
+
 def get_yahoo_quote(ticker: str, info) -> discord.Embed:
     symbol = info.get('symbol', ticker.upper())
     company_name = info.get('shortName', ticker.upper())
@@ -121,98 +147,87 @@ def get_yahoo_quote(ticker: str, info) -> discord.Embed:
     change_raw = info.get('regularMarketChange', 0.0) or 0.0
     change_pct_raw = info.get('regularMarketChangePercent', 0.0) or 0.0
     quote_time = info.get('regularMarketTime')
-    q_time = datetime.fromtimestamp(quote_time, tz=pytz.timezone('America/New_York')).strftime('%H:%M:%S %Y-%m-%d')
-
-    change_str = f'{change_raw:.2f}'
-    change_pct_str = f'{change_pct_raw:.2f}%'
-
-    if change_raw >= 0:
-        market_percent_string = f' (+{change_pct_str})'
-        change_string = f'+{change_str}'
-    else:
-        market_percent_string = f' ({change_pct_str})'
-        change_string = change_str
-
-    color = 0x85bb65 if change_raw >= 0 else 0xFF0000
-
-    if Utils.is_market_closed():
-        after_market = closed_market(info)
-    else:
-        after_market = ''
-
     week52_high = info.get('fiftyTwoWeekHigh')
     week52_low = info.get('fiftyTwoWeekLow')
+    market_cap = info.get('marketCap')
+    volume = info.get('volume')
+    avg_volume = info.get('averageVolume')
+    logo_url = info.get('logo_url') or info.get('logoUrl')
 
-    return stock_embed(change_string, color, company_name, high, latest_price, low, market_percent_string, prev, q_time, symbol,
-                       after_market, week52_high, week52_low)
-
-
-def stock_embed(change_string, color, company_name, high, latest_price, low, market_percent_string, prev, q_time, symbol,
-                after_market, week52_high=None, week52_low=None):
-    desc1 = ''.join([str('${:,.2f}'.format(float(latest_price))), " ", change_string, market_percent_string])
-    if high is not None and low is not None:
-        desc2 = ''.join(['High: ', '{:,.2f}'.format(float(high)), ' Low: ', '{:,.2f}'.format(float(low)), ' Prev: ',
-                         '{:,.2f}'.format(float(prev))])
+    if change_raw >= 0:
+        change_string = f'+{change_raw:.2f}'
+        pct_string = f'(+{change_pct_raw:.2f}%)'
     else:
-        desc2 = ''.join(['Prev: ', '{:,.2f}'.format(float(prev))])
-    if week52_high is not None and week52_low is not None:
-        desc3 = f'52wk High: {week52_high:,.2f}  52wk Low: {week52_low:,.2f}'
-    else:
-        desc3 = ''
+        change_string = f'{change_raw:.2f}'
+        pct_string = f'({change_pct_raw:.2f}%)'
+
+    color = 0x85bb65 if change_raw >= 0 else 0xFF0000
+    description = f'${latest_price:,.2f} {change_string} {pct_string}'
+
     embed = discord.Embed(
-        title="".join([company_name, " ($", symbol, ")"]),
-        url="https://finance.yahoo.com/quote/" + symbol,
-        description='\n'.join(filter(None, [desc1, desc2, desc3, after_market])),
+        title=f'{company_name} (${symbol})',
+        url=f'https://finance.yahoo.com/quote/{symbol}',
+        description=description,
         color=color
     )
-    embed.set_footer(text=f'{q_time}')
+
+    if logo_url:
+        embed.set_thumbnail(url=logo_url)
+
+    # Day Range
+    if high is not None and low is not None:
+        embed.add_field(name='Day Range', value=f'{low:,.2f} — {high:,.2f}', inline=True)
+
+    # Prev Close
+    embed.add_field(name='Prev Close', value=f'{prev:,.2f}', inline=True)
+
+    # 52-week Range with progress bar
+    if week52_high and week52_low and week52_high != week52_low:
+        pct = (latest_price - week52_low) / (week52_high - week52_low)
+        pct = max(0.0, min(1.0, pct))
+        filled = round(pct * 10)
+        bar = '▓' * filled + '░' * (10 - filled)
+        embed.add_field(name='52wk Range', value=f'{week52_low:,.2f} {bar} {week52_high:,.2f}', inline=False)
+
+    # Market Cap
+    if market_cap:
+        embed.add_field(name='Market Cap', value=format_large_number(market_cap, '$'), inline=True)
+
+    # Volume
+    if volume:
+        vol_str = format_large_number(volume)
+        if avg_volume:
+            vol_str += f' (avg {format_large_number(avg_volume)})'
+        embed.add_field(name='Volume', value=vol_str, inline=True)
+
+    # Pre/post market info when market is closed
+    if Utils.is_market_closed():
+        extended = closed_market(info)
+        if extended:
+            embed.add_field(name='Extended Hours', value=extended, inline=False)
+
+    embed.set_footer(text=get_market_status_footer(quote_time))
     return embed
 
 
 def closed_market(info):
-    postMarketPrice = info.get('postMarketPrice', 0.0) or 0.0
-    postMarketChange = info.get('postMarketChange', 0.0) or 0.0
-    postMarketChangePercent = info.get('postMarketChangePercent', 0.0) or 0.0
-    postMarketTime = info.get('postMarketTime')
-    try:
-        post_time = datetime.fromtimestamp(postMarketTime, tz=pytz.timezone('America/New_York')).strftime('%H:%M:%S %Y-%m-%d')
-    except TypeError:
-        post_time = ''
+    parts = []
 
-    preMarketPrice = info.get('preMarketPrice', 0.0) or 0.0
-    preMarketChange = info.get('preMarketChange', 0.0) or 0.0
-    preMarketChangePercent = info.get('preMarketChangePercent', 0.0) or 0.0
-    preMarketTime = info.get('preMarketTime')
-    try:
-        pre_time = datetime.fromtimestamp(preMarketTime, tz=pytz.timezone('America/New_York')).strftime('%H:%M:%S %Y-%m-%d')
-    except TypeError:
-        pre_time = ''
+    post_price = info.get('postMarketPrice', 0.0) or 0.0
+    if post_price > 0:
+        post_change = info.get('postMarketChange', 0.0) or 0.0
+        post_pct = info.get('postMarketChangePercent', 0.0) or 0.0
+        sign = '+' if post_change >= 0 else ''
+        parts.append(f'Post: ${post_price:.2f} {sign}{post_change:.2f} ({sign}{post_pct:.2f}%)')
 
-    if postMarketChange >= 0:
-        post_change_string = f'+{postMarketChange:.2f}'
-        post_percent_string = f'+{postMarketChangePercent:.2f}%'
-    else:
-        post_change_string = f'{postMarketChange:.2f}'
-        post_percent_string = f'{postMarketChangePercent:.2f}%'
+    pre_price = info.get('preMarketPrice', 0.0) or 0.0
+    if pre_price > 0:
+        pre_change = info.get('preMarketChange', 0.0) or 0.0
+        pre_pct = info.get('preMarketChangePercent', 0.0) or 0.0
+        sign = '+' if pre_change >= 0 else ''
+        parts.append(f'Pre: ${pre_price:.2f} {sign}{pre_change:.2f} ({sign}{pre_pct:.2f}%)')
 
-    if postMarketPrice > 0:
-        post_market_desc = f'\nPost-market: ${postMarketPrice:.2f} {post_change_string} ({post_percent_string}) {post_time}'
-    else:
-        post_market_desc = ''
-
-    if preMarketChange >= 0:
-        pre_change_string = f'+{preMarketChange:.2f}'
-        pre_percent_string = f'+{preMarketChangePercent:.2f}%'
-    else:
-        pre_change_string = f'{preMarketChange:.2f}'
-        pre_percent_string = f'{preMarketChangePercent:.2f}%'
-
-    if preMarketPrice > 0:
-        pre_market_desc = f'\nPre-market: ${preMarketPrice:.2f} {pre_change_string} ({pre_percent_string}) {pre_time}'
-    else:
-        pre_market_desc = ''
-
-    return f'{pre_market_desc}{post_market_desc}'
+    return '\n'.join(parts)
 
 
 def generate_chart(ticker: str, period: str):
