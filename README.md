@@ -14,7 +14,6 @@ A Discord bot with random fun commands.
 - setup environment variables:
   - DISCORD_TOKEN : your Bot Token from the discord developer portal
   - MONGODB_ADDRESS : your MongoDB address
-  - IEX_PUB : your IEX Cloud key
 
 TODO
 
@@ -27,7 +26,7 @@ docker build . -t discord-bot
 
 2. Run
 ```
-docker run -e DISCORD_TOKEN=<discord bot token> -e MONGODB_ADDRESS=<mongodb address> -e IEX_PUB=<iex cloud key> discord-bot
+docker run -e DISCORD_TOKEN=<discord bot token> -e MONGODB_ADDRESS=<mongodb address> discord-bot
 ```
 
 ## Usage
@@ -135,5 +134,5 @@ Earn experience by sending messages. The more active you are, the higher rank yo
 
 ### Stocks
 
-Type `$<ticker>` to get stock quotes.  
-I.e. `$MSFT` 
+Type `$<ticker>` to get a live stock quote with price, change, high/low, and pre/post market data. Updates automatically during market hours.
+E.g. `$MSFT`, `$AAPL`

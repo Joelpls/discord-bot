@@ -15,17 +15,16 @@ python bot.py
 ### Required Environment Variables
 - `DISCORD_TOKEN` — Bot token from the Discord developer portal
 - `MONGODB_ADDRESS` — MongoDB connection string
-- `IEX_PUB` — IEX Cloud API key (for stocks, if re-enabled)
 
 ### Docker
 ```bash
 docker build . -t discord-bot
-docker run -e DISCORD_TOKEN=<token> -e MONGODB_ADDRESS=<address> -e IEX_PUB=<key> discord-bot
+docker run -e DISCORD_TOKEN=<token> -e MONGODB_ADDRESS=<address> discord-bot
 ```
 
 ## Architecture
 
-**Entry point:** `bot.py` — Initializes the `discord.py` bot, loads all cogs from `./cogs/` (except `stocks.py`, which is explicitly excluded), and sets up an APScheduler job to post Epic Games free game links every Thursday at 11:03 AM ET.
+**Entry point:** `bot.py` — Initializes the `discord.py` bot, loads all cogs from `./cogs/` (except `discover.py` and `memes.py`, which are explicitly excluded), and sets up an APScheduler job to post Epic Games free game links every Thursday at 11:03 AM ET.
 
 **Cog system:** Each file in `cogs/` is a `commands.Cog` subclass auto-loaded by `bot.py`. Each cog connects to MongoDB independently using `os.environ.get('MONGODB_ADDRESS')`. There is no shared DB connection object — each cog creates its own `MongoClient` at module load time.
 
@@ -35,7 +34,7 @@ docker run -e DISCORD_TOKEN=<token> -e MONGODB_ADDRESS=<address> -e IEX_PUB=<key
 - `YouTube` — YouTube channel subscriptions (`youtube.py`)
 - `Logs` — Command error logs (in `bot.py`)
 
-**Shared utilities (`Utils.py`):** `load_json()` for reading `config.json`, URL expansion helpers (`url_expander`, `parse_full_link`), and stock market hours helpers (`is_market_closed`, `pre_market_closed`, `post_market_closed`) kept for future use.
+**Shared utilities (`Utils.py`):** `load_json()` for reading `config.json`, URL expansion helpers (`url_expander`, `parse_full_link`), and stock market hours helpers (`is_market_closed`, `pre_market_closed`, `post_market_closed`) used by `stocks.py` for live quote updates and pre/post market display.
 
 **`config.json`** stores the command prefix (`!`) and 8-ball responses. It is read via `Utils.load_json()`, imported from `Utils.py`.
 
