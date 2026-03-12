@@ -30,7 +30,7 @@ class Stocks(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.author.id != self.client.user.id:
+        if message.author.id != self.client.user.id and '```' not in message.content:
             tickers = re.findall(pattern_quote, message.content)
 
             for t in set(t.lower() for t in tickers):
