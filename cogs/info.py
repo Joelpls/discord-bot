@@ -100,6 +100,7 @@ class Info(commands.Cog):
         embed.add_field(name='TikTok & Twitter/X', value='Automatically reposts TikTok and Twitter/X video links as a direct playable video.', inline=False)
         embed.add_field(name='YouTube Notifications', value='Posts new videos from subscribed YouTube channels to a designated channel or thread. Shorts are ignored. Manage subscriptions with `!youtube`.', inline=False)
         embed.add_field(name='Stock Quotes', value='Type `$TICKER` (e.g. `$MSFT`) to get a live stock quote with price, change, high/low, and pre/post market data. Updates automatically during market hours.', inline=False)
+        embed.add_field(name='Stock Charts', value='Use `!chart TICKER [period]` or `/chart` to see a price chart. Periods: 1d, 5d, 1mo (default), 3mo, 6mo, 1y, 5y.', inline=False)
         await ctx.send(embed=embed)
 
     @commands.command(name='freegames', aliases=['freegame'])

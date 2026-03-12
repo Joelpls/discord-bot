@@ -136,3 +136,10 @@ Earn experience by sending messages. The more active you are, the higher rank yo
 
 Type `$<ticker>` to get a live stock quote with price, change, high/low, and pre/post market data. Updates automatically during market hours.
 E.g. `$MSFT`, `$AAPL`
+
+```
+!chart <ticker> [period]
+```
+- Show a price chart for a stock. Also available as `/chart`.
+- Periods: `1d`, `5d`, `1mo` (default), `3mo`, `6mo`, `1y`, `5y`
+- E.g. `!chart MSFT 1mo`

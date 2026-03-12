@@ -1,10 +1,11 @@
 discord.py>=2.0.0
 yfinance>=0.2.36
+matplotlib
 dnspython>=2.6.0
 pymongo>=4.8.0
 requests>=2.25.0
 compuglobal>=0.2.5
-pytz==2020.1
+pytz>=2022.5
 holidays>=0.10.5
 yt_dlp>=2024.05.27
 APScheduler>=3.10.4,<4.0

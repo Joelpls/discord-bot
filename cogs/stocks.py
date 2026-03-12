@@ -1,14 +1,22 @@
 import asyncio
+import io
 import discord
+from discord import app_commands
 from discord.ext import commands
 import re
 import pytz
 from datetime import datetime
 import yfinance as yf
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import Utils
 
 
 pattern_quote = re.compile(r'[$]([A-Za-z^][^\s]*)')
+
+VALID_PERIODS = ['1d', '5d', '1mo', '3mo', '6mo', '1y', '5y']
 
 
 class Stocks(commands.Cog):
@@ -28,6 +36,44 @@ class Stocks(commands.Cog):
             for t in set(t.lower() for t in tickers):
                 asyncio.get_event_loop().create_task(send_single_quote_embed(t, message))
             return
+
+    @commands.hybrid_command(name='chart', description='Show a price chart for a stock ticker')
+    @app_commands.describe(
+        ticker='Stock ticker symbol (e.g. MSFT)',
+        period='Time period: 1d, 5d, 1mo, 3mo, 6mo, 1y, 5y'
+    )
+    @app_commands.choices(period=[
+        app_commands.Choice(name='1 day', value='1d'),
+        app_commands.Choice(name='5 days', value='5d'),
+        app_commands.Choice(name='1 month', value='1mo'),
+        app_commands.Choice(name='3 months', value='3mo'),
+        app_commands.Choice(name='6 months', value='6mo'),
+        app_commands.Choice(name='1 year', value='1y'),
+        app_commands.Choice(name='5 years', value='5y'),
+    ])
+    async def chart(self, ctx, ticker: str, period: str = '1mo'):
+        """Show a price chart for a stock ticker. Usage: !chart MSFT 1mo"""
+        ticker = ticker.upper().lstrip('$')
+        period = period.lower()
+
+        if period not in VALID_PERIODS:
+            await ctx.send(f'Invalid period. Choose from: {", ".join(VALID_PERIODS)}')
+            return
+
+        async with ctx.typing():
+            try:
+                chart_file, company_name = await asyncio.to_thread(generate_chart, ticker, period)
+            except ValueError as e:
+                await ctx.send(str(e))
+                return
+
+            embed = discord.Embed(
+                title=f'{company_name} (${ticker}) — {period}',
+                url=f'https://finance.yahoo.com/quote/{ticker}',
+                color=discord.Color.blurple()
+            )
+            embed.set_image(url=f'attachment://{ticker}_chart.png')
+            await ctx.send(embed=embed, file=chart_file)
 
 
 async def setup(client):
@@ -160,6 +206,46 @@ def closed_market(info):
         pre_market_desc = ''
 
     return f'{pre_market_desc}{post_market_desc}'
+
+
+def generate_chart(ticker: str, period: str):
+    t = yf.Ticker(ticker)
+    hist = t.history(period=period)
+
+    if hist.empty:
+        raise ValueError(f'Unknown symbol: **${ticker}**')
+
+    company_name = t.info.get('shortName', ticker)
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+
+    dates = hist.index
+    closes = hist['Close']
+    color = '#2ecc71' if closes.iloc[-1] >= closes.iloc[0] else '#e74c3c'
+
+    ax.plot(dates, closes, color=color, linewidth=2)
+    ax.fill_between(dates, closes, closes.min(), alpha=0.15, color=color)
+
+    ax.set_title(f'{company_name} (${ticker})', fontsize=16, fontweight='bold')
+    ax.set_ylabel('Price ($)', fontsize=12)
+    ax.grid(True, alpha=0.3)
+
+    if period == '1d':
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+    elif period in ('5d', '1mo'):
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %d'))
+    else:
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
+
+    fig.autofmt_xdate()
+    plt.tight_layout()
+
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', dpi=100)
+    plt.close(fig)
+    buf.seek(0)
+
+    return discord.File(buf, filename=f'{ticker}_chart.png'), company_name
 
 
 async def get_stock_price_async(ticker: str):
