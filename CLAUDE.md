@@ -16,6 +16,9 @@ python bot.py
 - `DISCORD_TOKEN` — Bot token from the Discord developer portal
 - `MONGODB_ADDRESS` — MongoDB connection string
 
+### Optional Environment Variables
+- `LOGO_DEV_TOKEN` — API token from [logo.dev](https://logo.dev) for company logo thumbnails in stock embeds
+
 ### Docker
 ```bash
 docker build . -t discord-bot

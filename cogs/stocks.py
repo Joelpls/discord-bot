@@ -1,9 +1,11 @@
 import asyncio
 import io
+import os
 import discord
 from discord import app_commands
 from discord.ext import commands
 import re
+from urllib.parse import urlparse
 import pytz
 from datetime import datetime
 import yfinance as yf
@@ -152,7 +154,7 @@ def get_yahoo_quote(ticker: str, info) -> discord.Embed:
     market_cap = info.get('marketCap')
     volume = info.get('volume')
     avg_volume = info.get('averageVolume')
-    logo_url = info.get('logo_url') or info.get('logoUrl')
+    website = info.get('website')
 
     if change_raw >= 0:
         change_string = f'+{change_raw:.2f}'
@@ -171,8 +173,9 @@ def get_yahoo_quote(ticker: str, info) -> discord.Embed:
         color=color
     )
 
-    if logo_url:
-        embed.set_thumbnail(url=logo_url)
+    if website:
+        domain = urlparse(website).netloc.lstrip('www.')
+        embed.set_thumbnail(url=f'https://img.logo.dev/{domain}?token={os.environ.get("LOGO_DEV_TOKEN", "")}&format=png')
 
     # Day Range
     if high is not None and low is not None:
