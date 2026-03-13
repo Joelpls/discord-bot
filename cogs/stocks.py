@@ -339,9 +339,9 @@ def generate_compare_chart(tickers: list, period: str):
         closes = hist['Close']
         pct_change = (closes / closes.iloc[0] - 1) * 100
         color = COMPARE_COLORS[i % len(COMPARE_COLORS)]
-        ax.plot(hist.index, pct_change, color=color, linewidth=2, label=f'${ticker}')
+        ax.plot(hist.index, pct_change, color=color, linewidth=2, label=ticker)
 
-    title = ' vs '.join(f'${t}' for t in valid_tickers) + f' — {period}'
+    title = ' vs '.join(valid_tickers) + f' — {period}'
     ax.set_title(title, fontsize=16, fontweight='bold')
     ax.set_ylabel('% Change', fontsize=12)
     ax.axhline(y=0, color='white', linewidth=0.8, alpha=0.5)
