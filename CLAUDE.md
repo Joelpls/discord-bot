@@ -36,6 +36,7 @@ docker run -e DISCORD_TOKEN=<token> -e MONGODB_ADDRESS=<address> discord-bot
 - `Discover_Images` — Temporary state for `!pick` reaction flow (keyed by guild ID)
 - `YouTube` — YouTube channel subscriptions (`youtube.py`)
 - `Logs` — Command error logs (in `bot.py`)
+- `Stocks` — Per-user watchlists (`stocks.py`, collection: `watchlists`, keyed by `user_id` + `guild_id`)
 
 **Shared utilities (`Utils.py`):** `load_json()` for reading `config.json`, URL expansion helpers (`url_expander`, `parse_full_link`), and stock market hours helpers (`is_market_closed`, `pre_market_closed`, `post_market_closed`) used by `stocks.py` for live quote updates and pre/post market display.
 

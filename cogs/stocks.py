@@ -13,6 +13,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from pymongo import MongoClient
 import Utils
 
 
@@ -20,11 +21,19 @@ pattern_quote = re.compile(r'[$]([A-Za-z^][^\s]*)')
 
 VALID_PERIODS = ['1d', '5d', '1mo', '3mo', '6mo', '1y', '5y']
 
+cluster = MongoClient(os.environ.get('MONGODB_ADDRESS'))
+stocks_db = cluster['Stocks']
+watchlist_collection = stocks_db['watchlists']
+
+WATCHLIST_LIMIT = 15
+
 
 class Stocks(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+
+    watchlist_group = app_commands.Group(name='watchlist', description='Manage your stock watchlist')
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -119,6 +128,164 @@ class Stocks(commands.Cog):
             )
             embed.set_image(url=f'attachment://{ticker}_chart.png')
             await ctx.send(embed=embed, file=chart_file)
+
+
+    # --- /movers ---
+    @app_commands.command(name='movers', description='Show top stock market gainers and losers')
+    async def movers(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        try:
+            embed = await asyncio.to_thread(fetch_movers)
+        except Exception as e:
+            print(f'Movers error: {e}')
+            await interaction.followup.send('Failed to fetch market movers. Try again later.')
+            return
+        await interaction.followup.send(embed=embed)
+
+    # --- /news ---
+    @app_commands.command(name='news', description='Show recent news for a stock ticker')
+    @app_commands.describe(ticker='Stock ticker symbol (e.g. MSFT)')
+    async def news(self, interaction: discord.Interaction, ticker: str):
+        ticker = ticker.upper().strip().lstrip('$')
+        if not re.match(r'^[A-Za-z0-9^.\-]{1,10}$', ticker):
+            await interaction.response.send_message('Invalid ticker symbol.')
+            return
+
+        await interaction.response.defer()
+        try:
+            articles = await asyncio.to_thread(lambda: yf.Ticker(ticker).news)
+        except Exception as e:
+            print(f'News error: {e}')
+            await interaction.followup.send(f'Failed to fetch news for **${ticker}**.')
+            return
+
+        if not articles:
+            await interaction.followup.send(f'No recent news found for **${ticker}**.')
+            return
+
+        lines = []
+        for i, article in enumerate(articles[:5], 1):
+            content = article.get('content', {})
+            title = content.get('title', 'Untitled')
+            click_through = content.get('clickThroughUrl') or content.get('canonicalUrl') or {}
+            link = click_through.get('url', '')
+            provider = content.get('provider') or {}
+            publisher = provider.get('displayName', '')
+            pub_date = content.get('pubDate', '')
+            line = f'{i}. [**{title}**]({link})' if link else f'{i}. **{title}**'
+            meta = []
+            if publisher:
+                meta.append(f'*{publisher}*')
+            if pub_date:
+                try:
+                    ts = int(datetime.fromisoformat(pub_date.replace('Z', '+00:00')).timestamp())
+                    meta.append(f'<t:{ts}:R>')
+                except (ValueError, OSError):
+                    pass
+            if meta:
+                line += '\n' + ' · '.join(meta)
+            lines.append(line)
+
+        embed = discord.Embed(
+            title=f'${ticker} — Recent News',
+            description='\n'.join(lines),
+            color=discord.Color.blurple(),
+            url=f'https://finance.yahoo.com/quote/{ticker}'
+        )
+        await interaction.followup.send(embed=embed)
+
+    # --- /watchlist ---
+    @watchlist_group.command(name='add', description='Add a ticker to your watchlist')
+    @app_commands.describe(ticker='Stock ticker symbol (e.g. MSFT)')
+    async def watchlist_add(self, interaction: discord.Interaction, ticker: str):
+        ticker = ticker.upper().strip().lstrip('$')
+        if not re.match(r'^[A-Za-z0-9^.\-]{1,10}$', ticker):
+            await interaction.response.send_message('Invalid ticker symbol.')
+            return
+
+        user_id = interaction.user.id
+        guild_id = interaction.guild_id
+
+        doc = watchlist_collection.find_one({'user_id': user_id, 'guild_id': guild_id})
+        current_tickers = doc['tickers'] if doc else []
+
+        if ticker in current_tickers:
+            await interaction.response.send_message(f'**${ticker}** is already on your watchlist.')
+            return
+
+        if len(current_tickers) >= WATCHLIST_LIMIT:
+            await interaction.response.send_message(f'Watchlist is full ({WATCHLIST_LIMIT}/{WATCHLIST_LIMIT}). Remove a ticker first.')
+            return
+
+        watchlist_collection.update_one(
+            {'user_id': user_id, 'guild_id': guild_id},
+            {'$addToSet': {'tickers': ticker}},
+            upsert=True
+        )
+        await interaction.response.send_message(f'Added **${ticker}** to your watchlist. ({len(current_tickers) + 1}/{WATCHLIST_LIMIT})')
+
+    @watchlist_group.command(name='remove', description='Remove a ticker from your watchlist')
+    @app_commands.describe(ticker='Stock ticker symbol to remove')
+    async def watchlist_remove(self, interaction: discord.Interaction, ticker: str):
+        ticker = ticker.upper().strip().lstrip('$')
+        user_id = interaction.user.id
+        guild_id = interaction.guild_id
+
+        doc = watchlist_collection.find_one({'user_id': user_id, 'guild_id': guild_id})
+        current_tickers = doc['tickers'] if doc else []
+
+        if ticker not in current_tickers:
+            await interaction.response.send_message(f'**${ticker}** is not on your watchlist.')
+            return
+
+        watchlist_collection.update_one(
+            {'user_id': user_id, 'guild_id': guild_id},
+            {'$pull': {'tickers': ticker}}
+        )
+        await interaction.response.send_message(f'Removed **${ticker}** from your watchlist.')
+
+    @watchlist_remove.autocomplete('ticker')
+    async def watchlist_remove_autocomplete(self, interaction: discord.Interaction, current: str):
+        doc = watchlist_collection.find_one({'user_id': interaction.user.id, 'guild_id': interaction.guild_id})
+        tickers = doc['tickers'] if doc else []
+        current = current.upper()
+        return [
+            app_commands.Choice(name=t, value=t)
+            for t in tickers if current in t
+        ][:25]
+
+    @watchlist_group.command(name='view', description='View your watchlist with current prices')
+    async def watchlist_view(self, interaction: discord.Interaction):
+        doc = watchlist_collection.find_one({'user_id': interaction.user.id, 'guild_id': interaction.guild_id})
+        tickers = doc['tickers'] if doc else []
+
+        if not tickers:
+            await interaction.response.send_message('Your watchlist is empty. Use `/watchlist add` to get started.')
+            return
+
+        await interaction.response.defer()
+        quotes = await asyncio.to_thread(fetch_watchlist_prices, tickers)
+
+        lines = []
+        for t, info in quotes:
+            if info is None:
+                lines.append(f'[**{t}**](https://finance.yahoo.com/quote/{t}) — data unavailable')
+                continue
+            name = info.get('shortName', t)
+            price = info.get('regularMarketPrice', 0) or 0
+            change = info.get('regularMarketChange', 0) or 0
+            pct = info.get('regularMarketChangePercent', 0) or 0
+            sign = '+' if change >= 0 else ''
+            lines.append(f'[**{t}**](https://finance.yahoo.com/quote/{t}) {name}\n${price:,.2f} {sign}{change:.2f} ({sign}{pct:.2f}%)')
+
+        embed = discord.Embed(
+            title='Your Watchlist',
+            description='\n\n'.join(lines),
+            color=discord.Color.blurple()
+        )
+        footer = get_market_status_footer(None) + f' · {len(tickers)}/{WATCHLIST_LIMIT} slots used'
+        embed.set_footer(text=footer)
+        await interaction.followup.send(embed=embed)
 
 
 async def setup(client):
@@ -377,3 +544,47 @@ async def get_stock_price_async(ticker: str):
             raise AssertionError(f'No data for {ticker}')
         return info
     return await asyncio.to_thread(fetch)
+
+
+def fetch_movers():
+    lines_gainers = []
+    lines_losers = []
+
+    result = yf.screen('day_gainers')
+    for q in result['quotes'][:5]:
+        symbol = q.get('symbol', '?')
+        name = q.get('shortName', '')
+        price = q.get('regularMarketPrice', 0)
+        pct = q.get('regularMarketChangePercent', 0)
+        vol = q.get('regularMarketVolume', 0)
+        lines_gainers.append(
+            f'[**{symbol}**](https://finance.yahoo.com/quote/{symbol}) {name} — ${price:,.2f} (+{pct:.2f}%) Vol: {format_large_number(vol)}'
+        )
+
+    result = yf.screen('day_losers')
+    for q in result['quotes'][:5]:
+        symbol = q.get('symbol', '?')
+        name = q.get('shortName', '')
+        price = q.get('regularMarketPrice', 0)
+        pct = q.get('regularMarketChangePercent', 0)
+        vol = q.get('regularMarketVolume', 0)
+        lines_losers.append(
+            f'[**{symbol}**](https://finance.yahoo.com/quote/{symbol}) {name} — ${price:,.2f} ({pct:.2f}%) Vol: {format_large_number(vol)}'
+        )
+
+    embed = discord.Embed(title='Market Movers', color=discord.Color.blurple())
+    embed.add_field(name='Top Gainers', value='\n'.join(lines_gainers), inline=False)
+    embed.add_field(name='Top Losers', value='\n'.join(lines_losers), inline=False)
+    embed.set_footer(text=get_market_status_footer(None))
+    return embed
+
+
+def fetch_watchlist_prices(tickers):
+    results = []
+    for t in tickers:
+        try:
+            info = yf.Ticker(t).info
+            results.append((t, info))
+        except Exception:
+            results.append((t, None))
+    return results
