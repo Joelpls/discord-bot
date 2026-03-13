@@ -39,6 +39,49 @@ class Stocks(commands.Cog):
                 asyncio.get_event_loop().create_task(send_single_quote_embed(t, message))
             return
 
+    @app_commands.command(name='compare', description='Compare 2-4 stock tickers on a normalized % change chart')
+    @app_commands.describe(
+        tickers='Stock ticker symbols separated by spaces (e.g. MSFT AAPL GOOG)',
+        period='Time period: 1d, 5d, 1mo, 3mo, 6mo, 1y, 5y'
+    )
+    @app_commands.choices(period=[
+        app_commands.Choice(name='1 day', value='1d'),
+        app_commands.Choice(name='5 days', value='5d'),
+        app_commands.Choice(name='1 month', value='1mo'),
+        app_commands.Choice(name='3 months', value='3mo'),
+        app_commands.Choice(name='6 months', value='6mo'),
+        app_commands.Choice(name='1 year', value='1y'),
+        app_commands.Choice(name='5 years', value='5y'),
+    ])
+    async def compare(self, interaction: discord.Interaction, tickers: str, period: str = '1mo'):
+        """Compare 2-4 tickers on a normalized chart."""
+        parts = list(dict.fromkeys(tickers.upper().replace('$', '').split()))
+        period = period.lower()
+
+        if period not in VALID_PERIODS:
+            await interaction.response.send_message(f'Invalid period. Choose from: {", ".join(VALID_PERIODS)}')
+            return
+
+        if len(parts) < 2:
+            await interaction.response.send_message('Please provide at least 2 tickers to compare.')
+            return
+
+        if len(parts) > 4:
+            await interaction.response.send_message('Maximum 4 tickers allowed.')
+            return
+
+        await interaction.response.defer()
+        try:
+            chart_file, valid_tickers = await asyncio.to_thread(generate_compare_chart, parts, period)
+        except ValueError as e:
+            await interaction.followup.send(str(e))
+            return
+
+        title = ' vs '.join(f'${t}' for t in valid_tickers) + f' — {period}'
+        embed = discord.Embed(title=title, color=discord.Color.blurple())
+        embed.set_image(url='attachment://compare_chart.png')
+        await interaction.followup.send(embed=embed, file=chart_file)
+
     @commands.hybrid_command(name='chart', description='Show a price chart for a stock ticker')
     @app_commands.describe(
         ticker='Stock ticker symbol (e.g. MSFT)',
@@ -271,6 +314,56 @@ def generate_chart(ticker: str, period: str):
     buf.seek(0)
 
     return discord.File(buf, filename=f'{ticker}_chart.png'), company_name
+
+
+COMPARE_COLORS = ['#2ecc71', '#3498db', '#e74c3c', '#f39c12']
+
+
+def generate_compare_chart(tickers: list, period: str):
+    valid_tickers = []
+    histories = []
+
+    for ticker in tickers:
+        t = yf.Ticker(ticker)
+        hist = t.history(period=period)
+        if not hist.empty:
+            valid_tickers.append(ticker)
+            histories.append(hist)
+
+    if len(valid_tickers) < 2:
+        raise ValueError('Need at least 2 valid tickers to compare.')
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+
+    for i, (ticker, hist) in enumerate(zip(valid_tickers, histories)):
+        closes = hist['Close']
+        pct_change = (closes / closes.iloc[0] - 1) * 100
+        color = COMPARE_COLORS[i % len(COMPARE_COLORS)]
+        ax.plot(hist.index, pct_change, color=color, linewidth=2, label=f'${ticker}')
+
+    title = ' vs '.join(f'${t}' for t in valid_tickers) + f' — {period}'
+    ax.set_title(title, fontsize=16, fontweight='bold')
+    ax.set_ylabel('% Change', fontsize=12)
+    ax.axhline(y=0, color='white', linewidth=0.8, alpha=0.5)
+    ax.legend(fontsize=12)
+    ax.grid(True, alpha=0.3)
+
+    if period == '1d':
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+    elif period in ('5d', '1mo'):
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %d'))
+    else:
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
+
+    fig.autofmt_xdate()
+    plt.tight_layout()
+
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', dpi=100)
+    plt.close(fig)
+    buf.seek(0)
+
+    return discord.File(buf, filename='compare_chart.png'), valid_tickers
 
 
 async def get_stock_price_async(ticker: str):
