@@ -327,7 +327,10 @@ def generate_compare_chart(tickers: list, period: str):
         t = yf.Ticker(ticker)
         hist = t.history(period=period)
         if not hist.empty:
-            valid_tickers.append(ticker)
+            name = t.info.get('shortName', ticker)
+            if len(name) > 20:
+                name = name[:18] + '..'
+            valid_tickers.append((ticker, name))
             histories.append(hist)
 
     if len(valid_tickers) < 2:
@@ -335,13 +338,13 @@ def generate_compare_chart(tickers: list, period: str):
 
     fig, ax = plt.subplots(figsize=(10, 5))
 
-    for i, (ticker, hist) in enumerate(zip(valid_tickers, histories)):
+    for i, ((ticker, name), hist) in enumerate(zip(valid_tickers, histories)):
         closes = hist['Close']
         pct_change = (closes / closes.iloc[0] - 1) * 100
         color = COMPARE_COLORS[i % len(COMPARE_COLORS)]
-        ax.plot(hist.index, pct_change, color=color, linewidth=2, label=ticker)
+        ax.plot(hist.index, pct_change, color=color, linewidth=2, label=f'{ticker} ({name})')
 
-    title = ' vs '.join(valid_tickers) + f' — {period}'
+    title = ' vs '.join(t[0] for t in valid_tickers) + f' — {period}'
     ax.set_title(title, fontsize=16, fontweight='bold')
     ax.set_ylabel('% Change', fontsize=12)
     ax.axhline(y=0, color='white', linewidth=0.8, alpha=0.5)
@@ -363,7 +366,7 @@ def generate_compare_chart(tickers: list, period: str):
     plt.close(fig)
     buf.seek(0)
 
-    return discord.File(buf, filename='compare_chart.png'), valid_tickers
+    return discord.File(buf, filename='compare_chart.png'), [t[0] for t in valid_tickers]
 
 
 async def get_stock_price_async(ticker: str):
