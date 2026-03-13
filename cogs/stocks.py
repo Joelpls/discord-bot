@@ -13,6 +13,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import colorsys
 from pymongo import MongoClient
 import Utils
 
@@ -153,7 +154,10 @@ class Stocks(commands.Cog):
 
         await interaction.response.defer()
         try:
-            articles = await asyncio.to_thread(lambda: yf.Ticker(ticker).news)
+            def fetch_news():
+                t = yf.Ticker(ticker)
+                return t.news, t.info.get('regularMarketChange', 0) or 0
+            articles, change = await asyncio.to_thread(fetch_news)
         except Exception as e:
             print(f'News error: {e}')
             await interaction.followup.send(f'Failed to fetch news for **${ticker}**.')
@@ -189,7 +193,7 @@ class Stocks(commands.Cog):
         embed = discord.Embed(
             title=f'${ticker} — Recent News',
             description='\n'.join(lines),
-            color=discord.Color.blurple(),
+            color=0x85bb65 if change >= 0 else 0xFF0000,
             url=f'https://finance.yahoo.com/quote/{ticker}'
         )
         await interaction.followup.send(embed=embed)
@@ -267,6 +271,7 @@ class Stocks(commands.Cog):
         quotes = await asyncio.to_thread(fetch_watchlist_prices, tickers)
 
         lines = []
+        pct_changes = []
         for t, info in quotes:
             if info is None:
                 lines.append(f'[**{t}**](https://finance.yahoo.com/quote/{t}) — data unavailable')
@@ -275,13 +280,22 @@ class Stocks(commands.Cog):
             price = info.get('regularMarketPrice', 0) or 0
             change = info.get('regularMarketChange', 0) or 0
             pct = info.get('regularMarketChangePercent', 0) or 0
+            pct_changes.append(pct)
             sign = '+' if change >= 0 else ''
             lines.append(f'[**{t}**](https://finance.yahoo.com/quote/{t}) {name}\n${price:,.2f} {sign}{change:.2f} ({sign}{pct:.2f}%)')
+
+        # Color based on average % change across watchlist
+        # deep red (-5%+) → orange → yellow (0%) → green → bright green (+5%+)
+        avg_pct = sum(pct_changes) / len(pct_changes) if pct_changes else 0
+        clamped = max(-5.0, min(5.0, avg_pct))
+        hue = (clamped + 5) / 10.0 * 120 / 360.0  # 0° (red) to 120° (green)
+        r, g, b = colorsys.hls_to_rgb(hue, 0.45, 0.8)
+        color = (int(r * 255) << 16) | (int(g * 255) << 8) | int(b * 255)
 
         embed = discord.Embed(
             title='Your Watchlist',
             description='\n\n'.join(lines),
-            color=discord.Color.blurple()
+            color=color
         )
         footer = get_market_status_footer(None) + f' · {len(tickers)}/{WATCHLIST_LIMIT} slots used'
         embed.set_footer(text=footer)
@@ -549,6 +563,7 @@ async def get_stock_price_async(ticker: str):
 def fetch_movers():
     lines_gainers = []
     lines_losers = []
+    price_sum = 0
 
     result = yf.screen('day_gainers')
     for q in result['quotes'][:5]:
@@ -557,6 +572,7 @@ def fetch_movers():
         price = q.get('regularMarketPrice', 0)
         pct = q.get('regularMarketChangePercent', 0)
         vol = q.get('regularMarketVolume', 0)
+        price_sum += int(price * 100)
         lines_gainers.append(
             f'[**{symbol}**](https://finance.yahoo.com/quote/{symbol}) {name} — ${price:,.2f} (+{pct:.2f}%) Vol: {format_large_number(vol)}'
         )
@@ -568,11 +584,16 @@ def fetch_movers():
         price = q.get('regularMarketPrice', 0)
         pct = q.get('regularMarketChangePercent', 0)
         vol = q.get('regularMarketVolume', 0)
+        price_sum += int(price * 100)
         lines_losers.append(
             f'[**{symbol}**](https://finance.yahoo.com/quote/{symbol}) {name} — ${price:,.2f} ({pct:.2f}%) Vol: {format_large_number(vol)}'
         )
 
-    embed = discord.Embed(title='Market Movers', color=discord.Color.blurple())
+    hue = (price_sum % 360) / 360.0
+    r, g, b = colorsys.hls_to_rgb(hue, 0.5, 0.7)
+    color = (int(r * 255) << 16) | (int(g * 255) << 8) | int(b * 255)
+
+    embed = discord.Embed(title='Market Movers', color=color)
     embed.add_field(name='Top Gainers', value='\n'.join(lines_gainers), inline=False)
     embed.add_field(name='Top Losers', value='\n'.join(lines_losers), inline=False)
     embed.set_footer(text=get_market_status_footer(None))
