@@ -17,6 +17,7 @@ python bot.py
 - `MONGODB_ADDRESS` — MongoDB connection string
 
 ### Optional Environment Variables
+- `YOUTUBE_API_KEY` — YouTube Data API v3 key for channel resolution and video polling (`youtube.py`)
 - `LOGO_DEV_TOKEN` — API token from [logo.dev](https://logo.dev) for company logo thumbnails in stock embeds
 
 ### Docker

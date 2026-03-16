@@ -1,6 +1,9 @@
 import datetime
 import os
 
+from dotenv import load_dotenv
+load_dotenv()
+
 import discord
 from discord import Intents
 from discord.ext import commands
