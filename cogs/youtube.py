@@ -86,21 +86,11 @@ async def get_latest_video(session, channel_id):
 
 
 async def is_short(session, video_id):
-    """Return True if the video is a YouTube Short (≤60 seconds). Fails open."""
+    """Return True if the video is a YouTube Short. Fails open (returns False on error)."""
     try:
-        data = await _api_get(session, 'videos', {'part': 'contentDetails', 'id': video_id})
-        if not data.get('items'):
-            return False
-        duration = data['items'][0]['contentDetails']['duration']
-        # Parse ISO 8601 duration (e.g. PT15S, PT1M, PT1M30S)
-        match = re.match(r'PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?', duration)
-        if not match:
-            return False
-        hours = int(match.group(1) or 0)
-        minutes = int(match.group(2) or 0)
-        seconds = int(match.group(3) or 0)
-        total_seconds = hours * 3600 + minutes * 60 + seconds
-        return total_seconds <= 60
+        url = f'https://www.youtube.com/shorts/{video_id}'
+        async with session.head(url, allow_redirects=True, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+            return '/shorts/' in str(resp.url)
     except Exception:
         return False
 
@@ -229,6 +219,14 @@ class YouTube(commands.Cog):
     async def youtube_group(self, ctx):
         """Manage YouTube subscriptions. Subcommands: add, remove, list"""
         await ctx.send('Usage: `!youtube add <url/@handle> [#channel]`, `!youtube remove <url/@handle>`, `!youtube list`\nNote: Shorts are never posted.')
+
+    @commands.command(name='ytpoll', hidden=True)
+    @commands.is_owner()
+    async def youtube_poll(self, ctx):
+        """(Owner only) Manually trigger the poll loop to test notifications."""
+        await ctx.send('Polling all subscriptions now...')
+        await self.poll_feed()
+        await ctx.send('Poll complete.')
 
     @youtube_group.command(name='add')
     @app_commands.describe(
