@@ -468,7 +468,7 @@ def generate_chart(ticker: str, period: str):
 
     fig, ax = plt.subplots(figsize=(10, 5))
 
-    dates = hist.index
+    dates = hist.index.tz_localize(None)
     closes = hist['Close']
     color = '#2ecc71' if closes.iloc[-1] >= closes.iloc[0] else '#e74c3c'
 
@@ -520,10 +520,11 @@ def generate_compare_chart(tickers: list, period: str):
     fig, ax = plt.subplots(figsize=(10, 5))
 
     for i, ((ticker, name), hist) in enumerate(zip(valid_tickers, histories)):
+        dates = hist.index.tz_localize(None)
         closes = hist['Close']
         pct_change = (closes / closes.iloc[0] - 1) * 100
         color = COMPARE_COLORS[i % len(COMPARE_COLORS)]
-        ax.plot(hist.index, pct_change, color=color, linewidth=2, label=f'{ticker} ({name})')
+        ax.plot(dates, pct_change, color=color, linewidth=2, label=f'{ticker} ({name})')
 
     title = ' vs '.join(t[0] for t in valid_tickers) + f' — {period}'
     ax.set_title(title, fontsize=16, fontweight='bold')
