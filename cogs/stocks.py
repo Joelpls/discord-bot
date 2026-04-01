@@ -167,6 +167,8 @@ class Stocks(commands.Cog):
             await interaction.followup.send(f'No recent news found for **${ticker}**.')
             return
 
+        articles.sort(key=lambda a: a.get('content', {}).get('pubDate', ''), reverse=True)
+
         lines = []
         for i, article in enumerate(articles[:5], 1):
             content = article.get('content', {})
