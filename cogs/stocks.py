@@ -42,7 +42,7 @@ class Stocks(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.author.id != self.client.user.id and '```' not in message.content:
+        if not message.author.bot and '```' not in message.content:
             tickers = re.findall(pattern_quote, message.content)
 
             for t in set(t.lower() for t in tickers):
@@ -148,7 +148,7 @@ class Stocks(commands.Cog):
     @app_commands.describe(ticker='Stock ticker symbol (e.g. MSFT)')
     async def news(self, interaction: discord.Interaction, ticker: str):
         ticker = ticker.upper().strip().lstrip('$')
-        if not re.match(r'^[A-Za-z0-9^.\-]{1,10}$', ticker):
+        if not re.match(r'^[A-Za-z0-9^.\-=+]{1,10}$', ticker):
             await interaction.response.send_message('Invalid ticker symbol.')
             return
 
@@ -203,7 +203,7 @@ class Stocks(commands.Cog):
     @app_commands.describe(ticker='Stock ticker symbol (e.g. MSFT)')
     async def watchlist_add(self, interaction: discord.Interaction, ticker: str):
         ticker = ticker.upper().strip().lstrip('$')
-        if not re.match(r'^[A-Za-z0-9^.\-]{1,10}$', ticker):
+        if not re.match(r'^[A-Za-z0-9^.\-=+]{1,10}$', ticker):
             await interaction.response.send_message('Invalid ticker symbol.')
             return
 
