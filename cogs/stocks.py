@@ -364,9 +364,9 @@ def get_market_status_footer(quote_time):
 
 def get_yahoo_quote(ticker: str, info) -> discord.Embed:
     symbol = info.get('symbol', ticker.upper())
-    company_name = info.get('shortName', ticker.upper())
-    if company_name is None:
-        return discord.Embed(title=f'Failed to retrieve ${ticker.upper()}')
+    company_name = info.get('shortName') or info.get('longName') or ticker.upper()
+    if len(company_name) > 30:
+        company_name = company_name[:28] + '..'
 
     latest_price = info.get('regularMarketPrice', 0.0) or 0.0
     high = info.get('dayHigh')
@@ -470,7 +470,9 @@ def generate_chart(ticker: str, period: str):
     if hist.empty:
         raise ValueError(f'Unknown symbol: **${ticker}**')
 
-    company_name = t.info.get('shortName', ticker)
+    company_name = t.info.get('shortName') or t.info.get('longName') or ticker
+    if len(company_name) > 30:
+        company_name = company_name[:28] + '..'
 
     fig, ax = plt.subplots(figsize=(10, 5))
 
