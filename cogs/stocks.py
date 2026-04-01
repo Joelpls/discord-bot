@@ -457,9 +457,13 @@ def closed_market(info):
     return '\n'.join(parts)
 
 
+PERIOD_INTERVALS = {'1d': '5m', '5d': '30m'}
+
+
 def generate_chart(ticker: str, period: str):
     t = yf.Ticker(ticker)
-    hist = t.history(period=period)
+    interval = PERIOD_INTERVALS.get(period, '1d')
+    hist = t.history(period=period, interval=interval)
 
     if hist.empty:
         raise ValueError(f'Unknown symbol: **${ticker}**')
@@ -468,7 +472,7 @@ def generate_chart(ticker: str, period: str):
 
     fig, ax = plt.subplots(figsize=(10, 5))
 
-    dates = hist.index.tz_localize(None)
+    dates = hist.index.tz_localize(None) if hist.index.tz else hist.index
     closes = hist['Close']
     color = '#2ecc71' if closes.iloc[-1] >= closes.iloc[0] else '#e74c3c'
 
@@ -504,9 +508,11 @@ def generate_compare_chart(tickers: list, period: str):
     valid_tickers = []
     histories = []
 
+    interval = PERIOD_INTERVALS.get(period, '1d')
+
     for ticker in tickers:
         t = yf.Ticker(ticker)
-        hist = t.history(period=period)
+        hist = t.history(period=period, interval=interval)
         if not hist.empty:
             name = t.info.get('shortName', ticker)
             if len(name) > 20:
@@ -520,7 +526,7 @@ def generate_compare_chart(tickers: list, period: str):
     fig, ax = plt.subplots(figsize=(10, 5))
 
     for i, ((ticker, name), hist) in enumerate(zip(valid_tickers, histories)):
-        dates = hist.index.tz_localize(None)
+        dates = hist.index.tz_localize(None) if hist.index.tz else hist.index
         closes = hist['Close']
         pct_change = (closes / closes.iloc[0] - 1) * 100
         color = COMPARE_COLORS[i % len(COMPARE_COLORS)]
