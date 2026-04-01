@@ -88,7 +88,8 @@ class Stocks(commands.Cog):
             return
 
         title = ' vs '.join(f'${t}' for t in valid_tickers) + f' — {period}'
-        embed = discord.Embed(title=title, color=discord.Color.blurple())
+        links = ' · '.join(f'[${t}](https://finance.yahoo.com/quote/{t})' for t in valid_tickers)
+        embed = discord.Embed(title=title, description=links, color=discord.Color.blurple())
         embed.set_image(url='attachment://compare_chart.png')
         await interaction.followup.send(embed=embed, file=chart_file)
 
